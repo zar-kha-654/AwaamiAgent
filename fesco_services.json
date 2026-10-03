@@ -1,0 +1,40 @@
+{
+  "id": "fesco_services",
+  "category": "electricity",
+  "provider": "FESCO",
+  "provider_full_name": "Faisalabad Electric Supply Company",
+  "services": [
+    "Customer Bill Correction",
+    "Duplicate Bills",
+    "Bill Estimator",
+    "Procedure for replacement of defective meter",
+    "Load Management",
+    "Electricity Tariff",
+    "Customer service procedures and forms"
+  ],
+  "high_bill_support": {
+    "service": "Customer Bill Correction",
+    "purpose": "For consumers who believe their electricity bill contains an error or needs correction.",
+    "official_customer_services_page": "https://fesco.com.pk/cServices"
+  },
+  "defective_meter": {
+    "service": "Procedure for replacement of defective meter",
+    "official_customer_services_page": "https://fesco.com.pk/cServices"
+  },
+  "online_services": {
+    "official_fesco_eServices": "https://fesco.com.pk/eServices",
+    "available_services": [
+      "Bills",
+      "Online Electricity New Connection",
+      "Registration and Update Forms",
+      "CNIC/Mobile Number Registration and Update",
+      "Net Metering"
+    ]
+  },
+  "source": {
+    "name": "FESCO Customer Services",
+    "url": "https://fesco.com.pk/cServices",
+    "authority": "FESCO",
+    "verified_date": "2026-10-03"
+  }
+}
