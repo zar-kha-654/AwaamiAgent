@@ -1,0 +1,67 @@
+{
+  "id": "electricity_high_bill",
+  "category": "electricity",
+  "issue": "high_or_incorrect_bill",
+
+  "problem_description": "The consumer reports that an electricity bill is unexpectedly high or believes there is an error in the bill.",
+  {
+  "id": "electricity_high_bill",
+  "category": "electricity",
+  "issue": "high_or_incorrect_bill",
+
+  "keywords": [
+    "high bill", "wrong bill", "excess bill", "meter reading", "overbilling",
+    "bill zyada", "bill bohat zyada", "bijli ka bill", "ghalat bill", "meter reading ghalat",
+    "بجلی کا بل", "بل زیادہ", "غلط بل"
+  ],
+
+  "problem_description": "The consumer reports that ...",
+
+  "authority": "Relevant electricity distribution company (DISCO)",
+
+  "complaint_types": [
+    "Wrong meter reading",
+    "Wrong calculation of charges",
+    "Defective meter",
+    "Wrong application of late payment surcharge",
+    "Billing adjustment issue",
+    "Detection bill"
+  ],
+
+  "first_step": "The consumer should submit the billing complaint to the relevant electricity distribution company through its Consumer Service Center, Sub-Divisional Office or One-Window Operation.",
+
+  "billing_complaint_timeframes": {
+    "wrong_meter_reading_or_wrong_calculation": "Within 7 days from receipt of complaint",
+    "defective_meter_replacement": "As soon as possible, but not later than 2 billing cycles",
+    "wrong_late_payment_surcharge": "Within 3 days from receipt of complaint",
+    "billing_adjustments": "Within 3 days from receipt of complaint",
+    "detection_bill": "Within 15 days from receipt of complaint"
+  },
+
+  "escalation": "If the consumer is not satisfied with the distribution company's response or the distribution company does not respond, applicable further complaint options include filing a complaint with NEPRA under the relevant legal provisions.",
+
+  "useful_bill_information": [
+    "Reference number",
+    "Meter number",
+    "Reading date",
+    "Present meter reading",
+    "Previous meter reading",
+    "Total units consumed",
+    "Billing history",
+    "Amount payable",
+    "Arrears",
+    "Late payment surcharge"
+  ],
+
+  "source": {
+    "name": "NEPRA Consumer Service Manual (Revised/Updated 2025)",
+    "url": "https://nepra.org.pk/Legislation/7-Manuals/2025/CONSUMER%20SERVICE%20MANUAL%20%28CSM%29%20REVISED%202025.pdf",
+    "verified_date": "2026-10-03"
+      "source": {
+    "name": "...",
+    "url": "...",
+    "verified_date": "2026-10-03"
+  }
+}
+  }
+}

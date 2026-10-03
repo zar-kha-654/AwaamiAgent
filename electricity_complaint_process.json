@@ -1,0 +1,46 @@
+{
+  "id": "electricity_complaint_process",
+  "category": "electricity",
+  "issue": "electricity_complaint",
+  "provider_context": "FESCO",
+  "complaint_process": {
+    "step_1": {
+      "authority": "Relevant Distribution Company (DISCO)",
+      "description": "The consumer should first raise the electricity complaint with the relevant Distribution Company or Licensee."
+    },
+    "step_2": {
+      "authority": "DISCO Consumer Service Center / concerned office",
+      "description": "The consumer can use the Distribution Company's consumer complaint/service channels for issues such as billing, meter reading and electricity supply problems."
+    },
+    "step_3": {
+      "authority": "NEPRA",
+      "description": "If the Distribution Company fails to redress the grievance or the complaint is unjustly turned down, the consumer may use the applicable NEPRA complaint process."
+    }
+  },
+  "nepra_complaint_system": {
+    "purpose": "Register and track electricity consumer complaints.",
+    "url": "https://nepra.org.pk/CAD-Database/CMS-CAD/home.php"
+  },
+  "information_useful_for_complaint": [
+    "Account / Reference / Consumer Number",
+    "DISCO / Licensee",
+    "Main points of the complaint",
+    "Consumer name",
+    "Consumer contact information",
+    "Details of the complaint already submitted to the Distribution Company"
+  ],
+  "common_electricity_complaints": [
+    "Excessive or incorrect billing",
+    "Wrong meter reading",
+    "Billing calculation issue",
+    "Defective meter",
+    "Detection billing",
+    "Electricity supply problem"
+  ],
+  "source": {
+    "name": "NEPRA Complaint Management System and Consumer Service Manual",
+    "authority": "NEPRA",
+    "url": "https://nepra.org.pk/CAD-Database/CMS-CAD/home.php",
+    "verified_date": "2026-10-03"
+  }
+}
