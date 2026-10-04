@@ -578,22 +578,32 @@ def create_analysis_fallback(
 
         important = []
 
-        if rag_points:
+if rag_points:
 
-            important.extend(
-                rag_points[:3]
-            )
+    for point in rag_points[:5]:
 
-        else:
+        if not isinstance(point, str):
+            continue
 
-            important.extend(
-                [
-                    "Keep the bill, notice, application, or other relevant records.",
-                    "Verify important case-specific information before submitting a complaint.",
-                    "Contact the relevant official authority when confirmation is required."
-                ]
-            )
+        # Do not show source metadata inside Important Information.
+        if point.startswith("Source Name:"):
+            continue
 
+        if point.startswith("Official URL:"):
+            continue
+
+        if point.strip():
+            important.append(point.strip())
+
+if not important:
+
+    important.extend(
+        [
+            "Keep the bill, notice, application, or other relevant records.",
+            "Verify important case-specific information before submitting a complaint.",
+            "Contact the relevant official authority when confirmation is required."
+        ]
+    )
         next_steps = [
             "Collect the documents and evidence related to your problem.",
             "Compare your situation with the retrieved official civic information.",
