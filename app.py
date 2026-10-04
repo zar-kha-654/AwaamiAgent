@@ -6,7 +6,7 @@ import io
 import streamlit as st
 from rag.knowledge_base import ensure_knowledge_base
 from rag.rag_pipeline import query_civic_rag
-from groq import Groq
+from openai import OpenAI
 from pypdf import PdfReader
 from PIL import Image
 import pytesseract
@@ -174,7 +174,10 @@ if not api_key:
     st.stop()
 
 
-client = Groq(api_key=api_key)
+client = OpenAI(
+    api_key=api_key,
+    base_url="https://api.groq.com/openai/v1"
+)
 
 # ============================================================
 # RAG KNOWLEDGE BASE
