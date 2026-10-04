@@ -452,27 +452,33 @@ Uploaded document text:
     # --------------------------------------------------------
 
     try:
-        response = client.responses.create(
-            model=MODEL,
-            input=prompt
-        )
+    import requests
 
-        raw_output = response.output_text.strip()
-
-        result = parse_json_response(
-            raw_output
-        )
-
-        result["_rag_sources"] = rag_sources
-
-        return result
-
+    try:
+        test = requests.get("https://api.groq.com", timeout=10)
+        st.write("Groq connectivity:", test.status_code)
+        st.write("Groq response:", test.text[:300])
     except Exception as e:
-        st.error("GROQ ERROR")
+        st.error("Groq connectivity test failed")
         st.exception(e)
 
-        raise
-        
+    response = client.responses.create(
+        model=MODEL,
+        input=prompt
+    )
+
+    raw_output = response.output_text.strip()
+
+    result = parse_json_response(raw_output)
+
+    result["_rag_sources"] = rag_sources
+
+    return result
+
+except Exception as e:
+    st.error("GROQ ERROR")
+    st.exception(e)
+    raise
 def parse_json_response(text):
     """
     Parse JSON even if the model accidentally surrounds it
