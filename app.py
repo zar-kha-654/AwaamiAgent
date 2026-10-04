@@ -1,4 +1,4 @@
-````python
+
 import os
 import json
 import re
@@ -1389,4 +1389,3 @@ st.caption(
     "government authority or a substitute for professional "
     "legal advice."
 )
-````
