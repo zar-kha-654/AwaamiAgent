@@ -1162,25 +1162,6 @@ if st.session_state.analysis:
     st.divider()
 
     # --------------------------------------------------------
-    # AI STATUS
-    # --------------------------------------------------------
-
-    if result.get("_ai_unavailable"):
-
-        st.warning(
-            "The AI analysis service is temporarily unavailable. "
-            "AwaamiAgent is showing local civic guidance and "
-            "retrieved official-source information instead."
-        )
-
-    else:
-
-        st.success(
-            "AI analysis completed successfully."
-        )
-
-
-    # --------------------------------------------------------
     # EVIDENCE & VERIFICATION
     # --------------------------------------------------------
 
@@ -1202,16 +1183,9 @@ if st.session_state.analysis:
         f"**Official sources found:** {source_count}\n\n"
         f"**Civic evidence retrieved:** "
         f"{'Yes' if rag_evidence else 'No'}\n\n"
-        f"**AI analysis:** "
-        f"{'Unavailable — local fallback used' if result.get('_ai_unavailable') else 'Completed'}\n\n"
         "**Verification:** Check case-specific details with the relevant official authority."
     )
-
-
-    # --------------------------------------------------------
-    # ISSUE
-    # --------------------------------------------------------
-
+    
     # --------------------------------------------------------
     # ISSUE
     # --------------------------------------------------------
