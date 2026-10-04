@@ -715,6 +715,7 @@ def analyze_civic_problem(
                 "sources",
                 []
             )
+            print("DEBUG RAG SOURCES:", rag_sources)
 
     except Exception as e:
 
