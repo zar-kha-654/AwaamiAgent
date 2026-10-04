@@ -26,6 +26,64 @@ st.set_page_config(
     page_icon="🏛️",
     layout="centered"
 )
+# ============================================================
+# SIDEBAR
+# ============================================================
+
+with st.sidebar:
+    st.title("🏛️ AwaamiAgent")
+
+    st.markdown("### Civic Assistant")
+
+    st.write(
+        "Turn a civic problem into a clear action path:"
+    )
+
+    st.markdown(
+        """
+        **Problem → Understand → Verify → Act**
+        """
+    )
+
+    st.divider()
+
+    st.markdown("### 🔎 Civic Knowledge")
+
+    st.write(
+        "AwaamiAgent retrieves relevant civic information "
+        "from its official-source knowledge base before analysis."
+    )
+
+    if rag_status is not None:
+        st.success("Knowledge base loaded")
+    else:
+        st.warning("Knowledge base unavailable")
+
+    st.divider()
+
+    st.markdown("### 📄 Supported Input")
+
+    st.write(
+        "• Text problem\n"
+        "• PDF document\n"
+        "• JPG / PNG image"
+    )
+
+    st.divider()
+
+    st.markdown("### 🌐 Response")
+
+    st.write(
+        "Choose English or Urdu from the main panel."
+    )
+
+    st.divider()
+
+    st.caption(
+        "AwaamiAgent provides general civic assistance. "
+        "Always verify important information with the relevant "
+        "official authority."
+    )
 
 # ============================================================
 # API KEY
@@ -198,61 +256,182 @@ def parse_json_response(text):
 # ============================================================
 
 def create_analysis_fallback(problem, language, rag_context, rag_sources):
-    """Return a useful result when Groq is temporarily unavailable."""
+    """
+    Provide useful civic guidance from the user's problem and
+    retrieved RAG evidence when Groq is unavailable.
+    """
+
+    problem_text = problem.strip()
+
+    # Try to identify a basic issue category locally.
+    problem_lower = problem_text.lower()
+
+    if any(word in problem_lower for word in [
+        "electricity", "electric bill", "electricity bill",
+        "wapda", "lesco", "fesco", "iesco", "k-electric"
+    ]):
+        category_en = "Electricity / Billing Issue"
+        category_ur = "بجلی / بل کا مسئلہ"
+
+    elif any(word in problem_lower for word in [
+        "gas", "sngpl", "ssgc"
+    ]):
+        category_en = "Gas / Utility Issue"
+        category_ur = "گیس / یوٹیلیٹی کا مسئلہ"
+
+    elif any(word in problem_lower for word in [
+        "water", "sewerage", "sewage", "drainage"
+    ]):
+        category_en = "Water / Sewerage Issue"
+        category_ur = "پانی / سیوریج کا مسئلہ"
+
+    elif any(word in problem_lower for word in [
+        "road", "street", "pothole", "traffic"
+    ]):
+        category_en = "Road / Public Infrastructure Issue"
+        category_ur = "سڑک / عوامی انفراسٹرکچر کا مسئلہ"
+
+    elif any(word in problem_lower for word in [
+        "document", "notice", "letter", "application"
+    ]):
+        category_en = "Government Document / Application Issue"
+        category_ur = "سرکاری دستاویز / درخواست کا مسئلہ"
+
+    else:
+        category_en = "Civic Service Issue"
+        category_ur = "شہری مسئلہ"
+
+    # Extract useful pieces of retrieved RAG context.
+    rag_points = []
+
+    if rag_context:
+        lines = [
+            line.strip()
+            for line in rag_context.splitlines()
+            if line.strip()
+        ]
+
+        for line in lines:
+            cleaned = re.sub(
+                r"^\s*(?:[-•*]|\d+[.)])\s*",
+                "",
+                line
+            ).strip()
+
+            if len(cleaned) >= 30:
+                rag_points.append(cleaned)
+
+            if len(rag_points) >= 5:
+                break
 
     if language == "Urdu":
+
         explanation = (
-            "AwaamiAgent ka AI analysis service is waqt available nahi hai. "
-            "Neeche retrieved official civic information ko review karein "
-            "aur zaroori details relevant official authority se verify karein."
-        )
-        important = [
-            "Official civic source information ko review karein.",
-            "Important details ko relevant official authority se verify karein."
-        ]
-        next_steps = [
-            "Retrieved official information ko check karein.",
-            "Relevant government department ya authority se contact karein.",
-            "Apne relevant documents aur evidence ki copies rakhein."
-        ]
-        documents = [
-            "Relevant identification document",
-            "Complaint se related supporting documents"
-        ]
-        complaint = (
-            "Mohtaram Sir/Madam,\n\n"
-            "Main apne civic maslay ke silsilay mein darkhwast pesh karna chahta/chahti hoon.\n"
-            "Barah-e-karam is matter ka jaiza le kar munasib rehnumai aur action faraham kiya jaye.\n\n"
-            "Shukriya."
-        )
-    else:
-        explanation = (
-            "AwaamiAgent's AI analysis service is temporarily unavailable. "
-            "The retrieved official civic information can still be reviewed, "
-            "and important details should be verified with the relevant authority."
-        )
-        important = [
-            "Review the official civic source information retrieved by AwaamiAgent.",
-            "Verify important details with the relevant official authority."
-        ]
-        next_steps = [
-            "Review the retrieved official information.",
-            "Contact the relevant government department or authority.",
-            "Keep copies of relevant documents and supporting evidence."
-        ]
-        documents = [
-            "Relevant identification document",
-            "Supporting documents related to the complaint"
-        ]
-        complaint = (
-            "To Whom It May Concern,\n\n"
-            "I would like to submit a complaint regarding the civic issue described above. "
-            "Kindly review the matter and provide appropriate assistance.\n\n"
-            "Sincerely,\n[Your Name]"
+            f"Aap ne yeh civic masla report kiya hai: "
+            f"“{problem_text}”\n\n"
+            f"Isay {category_ur} ke taur par identify kiya gaya hai. "
+            "AwaamiAgent ne available civic knowledge base se relevant "
+            "information retrieve ki hai. Neeche di gayi information ko "
+            "apne case ke mutabiq check karein."
         )
 
+        important = []
+
+        if rag_points:
+            important.extend(rag_points[:3])
+        else:
+            important.extend([
+                "Apne maslay se related bill, notice ya doosre records sambhal kar rakhein.",
+                "Complaint submit karne se pehle apni relevant information verify karein.",
+                "Jahan zaroori ho, relevant official authority se confirmation lein."
+            ])
+
+        next_steps = [
+            "Apne maslay ke relevant documents aur evidence collect karein.",
+            "Retrieved official information ko apne case ke saath compare karein.",
+            "Relevant official department ya authority ko complaint/report submit karein.",
+            "Complaint/reference number aur submitted documents ka record rakhein.",
+            "Agar official information aapke specific case ko cover nahi karti, authority se confirmation lein."
+        ]
+
+        documents = [
+            "CNIC / relevant identification document",
+            "Related bill, notice, application or reference number",
+            "Relevant supporting documents or photographs",
+            "Previous complaint/reference number, if available"
+        ]
+
+        complaint = (
+            "Mohtaram Sir/Madam,\n\n"
+            f"Main {category_ur} ke hawalay se apni darkhwast/complaint "
+            "pesh karna chahta/chahti hoon.\n\n"
+            f"Maslay ki tafseel:\n{problem_text}\n\n"
+            "Barah-e-karam meri complaint ka jaiza le kar, "
+            "munasib rehnumai aur zaroori action faraham kiya jaye.\n\n"
+            "Shukriya.\n\n"
+            "[Aap ka Naam]\n"
+            "[CNIC / Reference Number]\n"
+            "[Contact Information]\n"
+            "[Date]"
+        )
+
+        category = category_ur
+
+    else:
+
+        explanation = (
+            f"You reported the following civic problem: "
+            f"“{problem_text}”\n\n"
+            f"AwaamiAgent identified this as a {category_en}. "
+            "Relevant information was retrieved from the civic knowledge "
+            "base. Review the information below and verify case-specific "
+            "details with the relevant official authority."
+        )
+
+        important = []
+
+        if rag_points:
+            important.extend(rag_points[:3])
+        else:
+            important.extend([
+                "Keep the bill, notice, application, or other relevant records.",
+                "Verify important case-specific information before submitting a complaint.",
+                "Contact the relevant official authority when confirmation is required."
+            ])
+
+        next_steps = [
+            "Collect the documents and evidence related to your problem.",
+            "Compare your situation with the retrieved official civic information.",
+            "Submit the complaint/report to the relevant official department or authority.",
+            "Keep the complaint/reference number and copies of submitted documents.",
+            "If the retrieved information does not cover your specific case, verify it with the relevant authority."
+        ]
+
+        documents = [
+            "CNIC / relevant identification document",
+            "Related bill, notice, application or reference number",
+            "Relevant supporting documents or photographs",
+            "Previous complaint/reference number, if available"
+        ]
+
+        complaint = (
+            "To Whom It May Concern,\n\n"
+            f"I would like to submit a complaint regarding a "
+            f"{category_en}.\n\n"
+            f"Details of the issue:\n{problem_text}\n\n"
+            "Kindly review this matter and provide the appropriate "
+            "guidance and necessary action.\n\n"
+            "Sincerely,\n"
+            "[Your Name]\n"
+            "[CNIC / Reference Number]\n"
+            "[Contact Information]\n"
+            "[Date]"
+        )
+
+        category = category_en
+
     return {
-        "issue_category": "Civic Issue",
+        "issue_category": category,
         "explanation": explanation,
         "important_information": important,
         "next_steps": next_steps,
@@ -261,7 +440,6 @@ def create_analysis_fallback(problem, language, rag_context, rag_sources):
         "_rag_sources": rag_sources,
         "_ai_unavailable": True
     }
-
 # ============================================================
 # AI CIVIC ANALYSIS
 # ============================================================
@@ -667,8 +845,9 @@ if st.session_state.analysis:
 
     rag_sources = result.get("_rag_sources", [])
 
-    if rag_sources:
-        st.subheader("🔗 Official Civic Sources")
+    st.subheader("🔗 Official Civic Sources")
+
+if rag_sources:
 
         for source in rag_sources:
             if isinstance(source, dict):
