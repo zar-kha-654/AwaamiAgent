@@ -444,7 +444,7 @@ Uploaded document text:
 {document_text}
 """
 
-    # --------------------------------------------------------
+        # --------------------------------------------------------
     # GROQ ANALYSIS
     # --------------------------------------------------------
 
@@ -461,7 +461,7 @@ Uploaded document text:
             temperature=0.2
         )
 
-                raw_output = response.choices[0].message.content.strip()
+        raw_output = response.choices[0].message.content.strip()
 
         result = parse_json_response(
             raw_output
@@ -477,51 +477,6 @@ Uploaded document text:
         st.exception(e)
 
         raise
-        # ----------------------------------------------------
-        # FALLBACK WHEN GROQ IS UNAVAILABLE
-        # ----------------------------------------------------
-
-        return {
-            "issue_category": "Civic Issue",
-
-            "explanation": (
-                "AwaamiAgent retrieved information from its "
-                "official civic knowledge base. The AI analysis "
-                "service is temporarily unavailable, so the "
-                "retrieved information is shown without additional "
-                "AI interpretation."
-            ),
-
-            "important_information": (
-                [
-                    "Relevant official civic information was retrieved."
-                ]
-                if rag_context
-                else
-                [
-                    "No matching official civic source evidence "
-                    "was retrieved."
-                ]
-            ),
-
-            "next_steps": [
-                "Review the available official source information.",
-                "Verify the applicable procedure with the relevant "
-                "government authority before taking action."
-            ],
-
-            "required_documents": [],
-
-            "complaint": (
-                "AI complaint generation is temporarily unavailable. "
-                "Please use the official information and enter your "
-                "personal details before submitting a complaint."
-            ),
-
-            "_rag_sources": rag_sources
-        }
-
-
 def parse_json_response(text):
     """
     Parse JSON even if the model accidentally surrounds it
