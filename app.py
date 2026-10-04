@@ -464,15 +464,15 @@ Uploaded document text:
             temperature=0.2
         )
 
-        raw_output = response.choices[0].message.content.strip()
+                        raw_output = response.choices[0].message.content.strip()
 
         result = parse_json_response(
-    raw_output
-)
+            raw_output
+        )
 
-result["_rag_sources"] = rag_sources
+        result["_rag_sources"] = rag_sources
 
-return result
+        return result
 
     except Exception as e:
 
