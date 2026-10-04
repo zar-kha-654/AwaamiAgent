@@ -175,6 +175,11 @@ if not api_key:
 
 
 client = Groq(api_key=api_key)
+try:
+    client.models.list()
+    print("GROQ CONNECTION: OK")
+except Exception as e:
+    print(f"GROQ CONNECTION ERROR: {e}")
 # ============================================================
 # RAG KNOWLEDGE BASE
 # ============================================================
