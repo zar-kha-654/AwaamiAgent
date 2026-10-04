@@ -6,4 +6,8 @@ python-docx
 reportlab
 pillow
 pytesseract
-
+requests
+pandas
+numpy
+faiss-cpu
+sentence-transformers

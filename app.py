@@ -4,6 +4,8 @@ import json
 import re
 import io
 import streamlit as st
+from rag.knowledge_base import ensure_knowledge_base
+from rag.rag_pipeline import query_civic_rag
 from groq import Groq
 from pypdf import PdfReader
 from PIL import Image
@@ -173,6 +175,25 @@ if not api_key:
 
 
 client = Groq(api_key=api_key)
+# ============================================================
+# RAG KNOWLEDGE BASE
+# ============================================================
+
+@st.cache_resource
+def load_rag_knowledge_base():
+    return ensure_knowledge_base()
+
+
+try:
+    rag_status = load_rag_knowledge_base()
+
+except Exception as e:
+    rag_status = None
+    st.warning(
+        "Official civic knowledge base could not be loaded yet. "
+        "AwaamiAgent will continue without RAG grounding."
+    )
+    st.caption(f"RAG technical error: {str(e)}")
 
 # ============================================================
 # DOCUMENT EXTRACTION
@@ -293,6 +314,27 @@ def analyze_civic_problem(
         document_text = "No document uploaded."
 
         document_metadata = "{}"
+            # ========================================================
+    # RAG RETRIEVAL
+    # ========================================================
+
+    rag_context = ""
+    rag_sources = []
+
+    try:
+        rag_result = query_civic_rag(
+            problem.strip(),
+            top_k=5
+        )
+
+        rag_context = rag_result.get("context", "")
+        rag_sources = rag_result.get("sources", [])
+
+    except Exception as e:
+        rag_context = ""
+        rag_sources = []
+
+        print(f"RAG retrieval error: {e}")
 
     prompt = f"""
 You are AwaamiAgent, an AI civic assistance system.
@@ -334,12 +376,20 @@ Return ONLY valid JSON using exactly these six fields:
 }}
 
 Keep the response concise.
-
 User's civic problem:
 {problem if problem.strip() else "No problem description provided."}
 
 Uploaded document metadata:
 {document_metadata}
+
+Official civic source evidence:
+{rag_context if rag_context else "No matching official source evidence was found."}
+
+Important instruction:
+Use the official civic source evidence above whenever it is relevant.
+Do not invent laws, procedures, deadlines, fees, or departments.
+If the official evidence does not contain enough information, clearly say that
+the information should be verified with the relevant official authority.
 
 Uploaded document text:
 {document_text}
