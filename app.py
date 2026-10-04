@@ -605,13 +605,69 @@ def create_analysis_fallback(
                 ]
             )
 
-        next_steps = [
-            "Collect the documents and evidence related to your problem.",
-            "Compare your situation with the retrieved official civic information.",
-            "Submit the complaint/report to the relevant official department or authority.",
-            "Keep the complaint/reference number and copies of submitted documents.",
-            "If the retrieved information does not cover your specific case, verify it with the relevant authority."
-        ]
+                # --------------------------------------------------------
+        # DOMAIN-SPECIFIC NEXT STEPS
+        # --------------------------------------------------------
+
+        if category_en == "Electricity / Billing Issue":
+
+            next_steps = [
+                "Compare the current bill with the previous bill, especially the units consumed.",
+                "Check whether the meter reading shown on the bill matches the actual meter reading.",
+                "Check the bill for arrears, adjustments, taxes, or other additional charges.",
+                "Keep the current bill, previous bill, and relevant meter information as evidence.",
+                "If the difference remains unexplained, submit a complaint to the relevant electricity provider or authority and keep the complaint/reference number."
+            ]
+
+        elif category_en == "Gas / Utility Issue":
+
+            next_steps = [
+                "Compare the current bill with the previous bill and check the consumption shown.",
+                "Check the meter reading on the bill against the actual meter reading.",
+                "Review the bill for arrears, adjustments, taxes, or other additional charges.",
+                "Keep the current and previous bills and relevant meter information as evidence.",
+                "If the issue remains unresolved, contact the relevant gas provider or authority and keep the complaint/reference number."
+            ]
+
+        elif category_en == "Water / Sewerage Issue":
+
+            next_steps = [
+                "Record the details of the water, sewerage, or drainage problem.",
+                "Take clear photographs or other evidence if appropriate.",
+                "Check whether there is a related bill, notice, or previous complaint.",
+                "Contact the relevant local authority or service provider.",
+                "Keep the complaint/reference number and copies of submitted evidence."
+            ]
+
+        elif category_en == "Road / Public Infrastructure Issue":
+
+            next_steps = [
+                "Record the exact location and nature of the road or infrastructure problem.",
+                "Take clear photographs of the issue if it is safe to do so.",
+                "Note any relevant landmarks or identifying information about the location.",
+                "Report the issue to the relevant local authority or department.",
+                "Keep the complaint/reference number and copies of submitted evidence."
+            ]
+
+        elif category_en == "Government Document / Application Issue":
+
+            next_steps = [
+                "Review the document, notice, or application carefully.",
+                "Collect the identification and supporting documents related to the matter.",
+                "Check whether a reference or application number is available.",
+                "Contact or submit the matter to the relevant government office.",
+                "Keep copies of the submitted documents and the complaint/reference number."
+            ]
+
+        else:
+
+            next_steps = [
+                "Collect the documents and evidence related to your problem.",
+                "Compare your situation with the retrieved official civic information.",
+                "Submit the complaint/report to the relevant official department or authority.",
+                "Keep the complaint/reference number and copies of submitted documents.",
+                "If the retrieved information does not cover your specific case, verify it with the relevant authority."
+            ]
 
         documents = [
             "CNIC / relevant identification document",
