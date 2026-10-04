@@ -847,7 +847,8 @@ if st.session_state.analysis:
 
     st.subheader("🔗 Official Civic Sources")
 
-if rag_sources:
+    if rag_sources:
+        st.subheader("🔗 Official Civic Sources")
 
         for source in rag_sources:
             if isinstance(source, dict):
@@ -857,10 +858,13 @@ if rag_sources:
                     or source.get("name")
                     or "Official source"
                 )
+
                 source_url = source.get("url")
 
                 if source_url:
-                    st.markdown(f"- [{source_name}]({source_url})")
+                    st.markdown(
+                        f"- [{source_name}]({source_url})"
+                    )
                 else:
                     st.write(f"• {source_name}")
             else:
@@ -897,7 +901,9 @@ if rag_sources:
                 st.error(
                     "Something went wrong while generating the complaint."
                 )
-                st.caption(f"Technical error: {str(e)}")
+                st.caption(
+                    f"Technical error: {str(e)}"
+                )
 
 # ============================================================
 # DISPLAY POLISHED COMPLAINT
