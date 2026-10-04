@@ -3,6 +3,7 @@ import os
 import json
 import re
 import io
+import requests
 import streamlit as st
 from rag.knowledge_base import ensure_knowledge_base
 from rag.rag_pipeline import query_civic_rag
@@ -294,6 +295,35 @@ def analyze_civic_problem(
     language,
     document_context=None
 ):
+        try:
+        test = requests.get(
+            "https://api.groq.com",
+            timeout=10
+        )
+
+        st.write("Groq connectivity:", test.status_code)
+        st.write("Groq response:", test.text[:300])
+
+        response = client.responses.create(
+            model=MODEL,
+            input=prompt
+        )
+
+        raw_output = response.output_text.strip()
+
+        result = parse_json_response(
+            raw_output
+        )
+
+        result["_rag_sources"] = rag_sources
+
+        return result
+
+    except Exception as e:
+        st.error("GROQ ERROR")
+        st.exception(e)
+
+        raise
     """
     Analyze a user's civic problem using RAG + Groq.
     If Groq is unavailable, return the official RAG evidence
