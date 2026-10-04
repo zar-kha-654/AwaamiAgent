@@ -12,3 +12,4 @@ numpy
 faiss-cpu
 sentence-transformers
 torchvision
+openai
