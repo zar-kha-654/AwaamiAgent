@@ -1,3 +1,4 @@
+````python
 import os
 import json
 import re
@@ -11,11 +12,13 @@ from pypdf import PdfReader
 from PIL import Image
 import pytesseract
 
+
 # ============================================================
 # CONFIGURATION
 # ============================================================
 
 MODEL = "openai/gpt-oss-120b"
+
 
 # ============================================================
 # PAGE CONFIGURATION
@@ -26,12 +29,123 @@ st.set_page_config(
     page_icon="🏛️",
     layout="centered"
 )
+
+
+# ============================================================
+# PROFESSIONAL UI STYLING
+# ============================================================
+
+st.markdown(
+    """
+    <style>
+    .main-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.2rem;
+    }
+
+    .subtitle {
+        font-size: 1.05rem;
+        color: #666;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-label {
+        font-size: 1.35rem;
+        font-weight: 650;
+        margin-top: 1rem;
+    }
+
+    .status-box {
+        padding: 0.8rem 1rem;
+        border-radius: 10px;
+        margin: 0.5rem 0 1rem 0;
+        border: 1px solid #ddd;
+    }
+
+    .sidebar-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    div[data-testid="stFileUploader"] {
+        margin-bottom: 1rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+
+# ============================================================
+# API KEY
+# ============================================================
+
+def get_api_key():
+    """Get Groq API key from Streamlit Secrets or environment."""
+
+    try:
+        api_key = st.secrets.get("GROQ_API_KEY")
+    except Exception:
+        api_key = None
+
+    if not api_key:
+        api_key = os.getenv("GROQ_API_KEY")
+
+    return api_key
+
+
+api_key = get_api_key()
+
+if not api_key:
+    st.error(
+        "GROQ_API_KEY is not configured. "
+        "Add it to Streamlit Secrets or the environment."
+    )
+    st.stop()
+
+
+client = OpenAI(
+    api_key=api_key,
+    base_url="https://api.groq.com/openai/v1"
+)
+
+
+# ============================================================
+# RAG KNOWLEDGE BASE
+# ============================================================
+
+@st.cache_resource
+def load_rag_knowledge_base():
+    return ensure_knowledge_base()
+
+
+try:
+    rag_status = load_rag_knowledge_base()
+
+except Exception as e:
+    rag_status = None
+
+    st.warning(
+        "Official civic knowledge base could not be loaded yet. "
+        "AwaamiAgent will continue without RAG grounding."
+    )
+
+    st.caption(
+        f"RAG technical error: {str(e)}"
+    )
+
+
 # ============================================================
 # SIDEBAR
 # ============================================================
 
 with st.sidebar:
-    st.title("🏛️ AwaamiAgent")
+
+    st.markdown(
+        '<div class="sidebar-title">🏛️ AwaamiAgent</div>',
+        unsafe_allow_html=True
+    )
 
     st.markdown("### Civic Assistant")
 
@@ -85,56 +199,6 @@ with st.sidebar:
         "official authority."
     )
 
-# ============================================================
-# API KEY
-# ============================================================
-
-def get_api_key():
-    """Get Groq API key from Streamlit Secrets or environment."""
-    try:
-        api_key = st.secrets.get("GROQ_API_KEY")
-    except Exception:
-        api_key = None
-
-    if not api_key:
-        api_key = os.getenv("GROQ_API_KEY")
-
-    return api_key
-
-
-api_key = get_api_key()
-
-if not api_key:
-    st.error(
-        "GROQ_API_KEY is not configured. "
-        "Add it to Streamlit Secrets or the environment."
-    )
-    st.stop()
-
-
-client = OpenAI(
-    api_key=api_key,
-    base_url="https://api.groq.com/openai/v1"
-)
-
-# ============================================================
-# RAG KNOWLEDGE BASE
-# ============================================================
-
-@st.cache_resource
-def load_rag_knowledge_base():
-    return ensure_knowledge_base()
-
-
-try:
-    rag_status = load_rag_knowledge_base()
-except Exception as e:
-    rag_status = None
-    st.warning(
-        "Official civic knowledge base could not be loaded yet. "
-        "AwaamiAgent will continue without RAG grounding."
-    )
-    st.caption(f"RAG technical error: {str(e)}")
 
 # ============================================================
 # DOCUMENT EXTRACTION
@@ -142,11 +206,17 @@ except Exception as e:
 
 def extract_pdf_text(file_bytes):
     """Extract selectable text from a PDF."""
-    reader = PdfReader(io.BytesIO(file_bytes))
+
+    reader = PdfReader(
+        io.BytesIO(file_bytes)
+    )
 
     pages = []
+
     for page in reader.pages:
-        pages.append(page.extract_text() or "")
+        pages.append(
+            page.extract_text() or ""
+        )
 
     return {
         "text": "\n\n".join(pages).strip(),
@@ -157,7 +227,10 @@ def extract_pdf_text(file_bytes):
 
 def extract_image_text(file_bytes):
     """Extract text from an image using OCR."""
-    image = Image.open(io.BytesIO(file_bytes))
+
+    image = Image.open(
+        io.BytesIO(file_bytes)
+    )
 
     text = pytesseract.image_to_string(
         image,
@@ -173,6 +246,7 @@ def extract_image_text(file_bytes):
 
 def process_uploaded_document(uploaded_file):
     """Process an uploaded PDF or image."""
+
     if uploaded_file is None:
         return None
 
@@ -185,19 +259,35 @@ def process_uploaded_document(uploaded_file):
     }
 
     try:
-        if uploaded_file.type == "application/pdf":
-            result = extract_pdf_text(file_bytes)
 
-        elif uploaded_file.type in ["image/png", "image/jpeg"]:
-            result = extract_image_text(file_bytes)
+        if uploaded_file.type == "application/pdf":
+
+            result = extract_pdf_text(
+                file_bytes
+            )
+
+        elif uploaded_file.type in [
+            "image/png",
+            "image/jpeg"
+        ]:
+
+            result = extract_image_text(
+                file_bytes
+            )
 
         else:
-            raise ValueError("Unsupported file type.")
+            raise ValueError(
+                "Unsupported file type."
+            )
 
-        metadata.update({
-            "page_count": result["page_count"],
-            "extraction_method": result["extraction_method"]
-        })
+        metadata.update(
+            {
+                "page_count": result["page_count"],
+                "extraction_method": result[
+                    "extraction_method"
+                ]
+            }
+        )
 
         return {
             "metadata": metadata,
@@ -205,9 +295,11 @@ def process_uploaded_document(uploaded_file):
         }
 
     except Exception as e:
+
         raise ValueError(
             f"Could not process the uploaded document: {str(e)}"
         )
+
 
 # ============================================================
 # JSON PARSER
@@ -215,6 +307,7 @@ def process_uploaded_document(uploaded_file):
 
 def parse_json_response(text):
     """Parse JSON even if the model returns markdown code fences."""
+
     cleaned = re.sub(
         r"^```(?:json)?\s*|\s*```$",
         "",
@@ -223,18 +316,33 @@ def parse_json_response(text):
     )
 
     try:
-        result = json.loads(cleaned)
+
+        result = json.loads(
+            cleaned
+        )
+
     except json.JSONDecodeError:
+
         start = cleaned.find("{")
         end = cleaned.rfind("}")
 
         if start == -1 or end == -1:
-            raise ValueError("The AI returned an invalid JSON response.")
+
+            raise ValueError(
+                "The AI returned an invalid JSON response."
+            )
 
         try:
-            result = json.loads(cleaned[start:end + 1])
+
+            result = json.loads(
+                cleaned[start:end + 1]
+            )
+
         except json.JSONDecodeError:
-            raise ValueError("The AI returned an invalid JSON response.")
+
+            raise ValueError(
+                "The AI returned an invalid JSON response."
+            )
 
     required_fields = [
         "issue_category",
@@ -246,65 +354,124 @@ def parse_json_response(text):
     ]
 
     for field in required_fields:
+
         if field not in result:
+
             result[field] = []
 
     return result
+
 
 # ============================================================
 # LOCAL FALLBACK
 # ============================================================
 
-def create_analysis_fallback(problem, language, rag_context, rag_sources):
+def create_analysis_fallback(
+    problem,
+    language,
+    rag_context,
+    rag_sources
+):
     """
-    Provide useful civic guidance from the user's problem and
-    retrieved RAG evidence when Groq is unavailable.
+    Provide useful civic guidance when Groq is unavailable.
     """
 
     problem_text = problem.strip()
 
-    # Try to identify a basic issue category locally.
+    if not problem_text:
+        problem_text = (
+            "The user uploaded a civic/government document "
+            "but did not provide a separate problem description."
+        )
+
     problem_lower = problem_text.lower()
 
-    if any(word in problem_lower for word in [
-        "electricity", "electric bill", "electricity bill",
-        "wapda", "lesco", "fesco", "iesco", "k-electric"
-    ]):
+    # --------------------------------------------------------
+    # BASIC LOCAL ISSUE CLASSIFICATION
+    # --------------------------------------------------------
+
+    if any(
+        word in problem_lower
+        for word in [
+            "electricity",
+            "electric bill",
+            "electricity bill",
+            "wapda",
+            "lesco",
+            "fesco",
+            "iesco",
+            "k-electric"
+        ]
+    ):
+
         category_en = "Electricity / Billing Issue"
         category_ur = "بجلی / بل کا مسئلہ"
 
-    elif any(word in problem_lower for word in [
-        "gas", "sngpl", "ssgc"
-    ]):
+    elif any(
+        word in problem_lower
+        for word in [
+            "gas",
+            "sngpl",
+            "ssgc"
+        ]
+    ):
+
         category_en = "Gas / Utility Issue"
         category_ur = "گیس / یوٹیلیٹی کا مسئلہ"
 
-    elif any(word in problem_lower for word in [
-        "water", "sewerage", "sewage", "drainage"
-    ]):
+    elif any(
+        word in problem_lower
+        for word in [
+            "water",
+            "sewerage",
+            "sewage",
+            "drainage"
+        ]
+    ):
+
         category_en = "Water / Sewerage Issue"
         category_ur = "پانی / سیوریج کا مسئلہ"
 
-    elif any(word in problem_lower for word in [
-        "road", "street", "pothole", "traffic"
-    ]):
+    elif any(
+        word in problem_lower
+        for word in [
+            "road",
+            "street",
+            "pothole",
+            "traffic"
+        ]
+    ):
+
         category_en = "Road / Public Infrastructure Issue"
         category_ur = "سڑک / عوامی انفراسٹرکچر کا مسئلہ"
 
-    elif any(word in problem_lower for word in [
-        "document", "notice", "letter", "application"
-    ]):
+    elif any(
+        word in problem_lower
+        for word in [
+            "document",
+            "notice",
+            "letter",
+            "application"
+        ]
+    ):
+
         category_en = "Government Document / Application Issue"
         category_ur = "سرکاری دستاویز / درخواست کا مسئلہ"
 
     else:
+
         category_en = "Civic Service Issue"
         category_ur = "شہری مسئلہ"
 
-    # Extract useful pieces of retrieved RAG context.
+
+    # --------------------------------------------------------
+    # EXTRACT RAG INFORMATION
+    # --------------------------------------------------------
+
     rag_points = []
 
     if rag_context:
+
         lines = [
             line.strip()
             for line in rag_context.splitlines()
@@ -312,6 +479,7 @@ def create_analysis_fallback(problem, language, rag_context, rag_sources):
         ]
 
         for line in lines:
+
             cleaned = re.sub(
                 r"^\s*(?:[-•*]|\d+[.)])\s*",
                 "",
@@ -319,10 +487,17 @@ def create_analysis_fallback(problem, language, rag_context, rag_sources):
             ).strip()
 
             if len(cleaned) >= 30:
-                rag_points.append(cleaned)
+                rag_points.append(
+                    cleaned
+                )
 
             if len(rag_points) >= 5:
                 break
+
+
+    # --------------------------------------------------------
+    # URDU FALLBACK
+    # --------------------------------------------------------
 
     if language == "Urdu":
 
@@ -338,13 +513,20 @@ def create_analysis_fallback(problem, language, rag_context, rag_sources):
         important = []
 
         if rag_points:
-            important.extend(rag_points[:3])
+
+            important.extend(
+                rag_points[:3]
+            )
+
         else:
-            important.extend([
-                "Apne maslay se related bill, notice ya doosre records sambhal kar rakhein.",
-                "Complaint submit karne se pehle apni relevant information verify karein.",
-                "Jahan zaroori ho, relevant official authority se confirmation lein."
-            ])
+
+            important.extend(
+                [
+                    "Apne maslay se related bill, notice ya doosre records sambhal kar rakhein.",
+                    "Complaint submit karne se pehle apni relevant information verify karein.",
+                    "Jahan zaroori ho, relevant official authority se confirmation lein."
+                ]
+            )
 
         next_steps = [
             "Apne maslay ke relevant documents aur evidence collect karein.",
@@ -363,8 +545,8 @@ def create_analysis_fallback(problem, language, rag_context, rag_sources):
 
         complaint = (
             "Mohtaram Sir/Madam,\n\n"
-            f"Main {category_ur} ke hawalay se apni darkhwast/complaint "
-            "pesh karna chahta/chahti hoon.\n\n"
+            f"Main {category_ur} ke hawalay se "
+            "apni darkhwast/complaint pesh karna chahta/chahti hoon.\n\n"
             f"Maslay ki tafseel:\n{problem_text}\n\n"
             "Barah-e-karam meri complaint ka jaiza le kar, "
             "munasib rehnumai aur zaroori action faraham kiya jaye.\n\n"
@@ -377,27 +559,40 @@ def create_analysis_fallback(problem, language, rag_context, rag_sources):
 
         category = category_ur
 
+
+    # --------------------------------------------------------
+    # ENGLISH FALLBACK
+    # --------------------------------------------------------
+
     else:
 
         explanation = (
             f"You reported the following civic problem: "
             f"“{problem_text}”\n\n"
-            f"AwaamiAgent identified this as a {category_en}. "
-            "Relevant information was retrieved from the civic knowledge "
-            "base. Review the information below and verify case-specific "
-            "details with the relevant official authority."
+            f"AwaamiAgent identified this as a "
+            f"{category_en}. Relevant information was retrieved "
+            "from the civic knowledge base. Review the information "
+            "below and verify case-specific details with the "
+            "relevant official authority."
         )
 
         important = []
 
         if rag_points:
-            important.extend(rag_points[:3])
+
+            important.extend(
+                rag_points[:3]
+            )
+
         else:
-            important.extend([
-                "Keep the bill, notice, application, or other relevant records.",
-                "Verify important case-specific information before submitting a complaint.",
-                "Contact the relevant official authority when confirmation is required."
-            ])
+
+            important.extend(
+                [
+                    "Keep the bill, notice, application, or other relevant records.",
+                    "Verify important case-specific information before submitting a complaint.",
+                    "Contact the relevant official authority when confirmation is required."
+                ]
+            )
 
         next_steps = [
             "Collect the documents and evidence related to your problem.",
@@ -416,8 +611,8 @@ def create_analysis_fallback(problem, language, rag_context, rag_sources):
 
         complaint = (
             "To Whom It May Concern,\n\n"
-            f"I would like to submit a complaint regarding a "
-            f"{category_en}.\n\n"
+            f"I would like to submit a complaint regarding "
+            f"a {category_en}.\n\n"
             f"Details of the issue:\n{problem_text}\n\n"
             "Kindly review this matter and provide the appropriate "
             "guidance and necessary action.\n\n"
@@ -430,6 +625,7 @@ def create_analysis_fallback(problem, language, rag_context, rag_sources):
 
         category = category_en
 
+
     return {
         "issue_category": category,
         "explanation": explanation,
@@ -440,6 +636,8 @@ def create_analysis_fallback(problem, language, rag_context, rag_sources):
         "_rag_sources": rag_sources,
         "_ai_unavailable": True
     }
+
+
 # ============================================================
 # AI CIVIC ANALYSIS
 # ============================================================
@@ -454,24 +652,37 @@ def analyze_civic_problem(
     language_instruction = (
         "Respond in English."
         if language == "English"
-        else "Respond in natural, simple Urdu. Keep important English terms "
-             "in parentheses when useful."
+        else
+        "Respond in natural, simple Urdu. Keep important English "
+        "terms in parentheses when useful."
     )
+
 
     # --------------------------------------------------------
     # DOCUMENT CONTEXT
     # --------------------------------------------------------
 
     if document_context:
-        document_text = document_context.get("text", "")
+
+        document_text = document_context.get(
+            "text",
+            ""
+        )
+
         document_metadata = json.dumps(
-            document_context.get("metadata", {}),
+            document_context.get(
+                "metadata",
+                {}
+            ),
             ensure_ascii=False,
             indent=2
         )
+
     else:
+
         document_text = "No document uploaded."
         document_metadata = "{}"
+
 
     # --------------------------------------------------------
     # CIVIC RAG
@@ -481,24 +692,39 @@ def analyze_civic_problem(
     rag_sources = []
 
     try:
+
         rag_query = problem.strip()
 
         if not rag_query and document_text:
+
             rag_query = document_text[:3000]
 
         if rag_query:
+
             rag_result = query_civic_rag(
                 rag_query,
                 top_k=5
             )
 
-            rag_context = rag_result.get("context", "")
-            rag_sources = rag_result.get("sources", [])
+            rag_context = rag_result.get(
+                "context",
+                ""
+            )
+
+            rag_sources = rag_result.get(
+                "sources",
+                []
+            )
 
     except Exception as e:
-        print(f"RAG retrieval error: {e}")
+
+        print(
+            f"RAG retrieval error: {e}"
+        )
+
         rag_context = ""
         rag_sources = []
+
 
     # --------------------------------------------------------
     # GROQ PROMPT
@@ -565,27 +791,35 @@ Uploaded document text:
 {document_text}
 """
 
+
     # --------------------------------------------------------
     # GROQ ANALYSIS
     # --------------------------------------------------------
 
     try:
+
         response = client.responses.create(
             model=MODEL,
             input=prompt
         )
 
         raw_output = response.output_text.strip()
-        result = parse_json_response(raw_output)
+
+        result = parse_json_response(
+            raw_output
+        )
+
         result["_rag_sources"] = rag_sources
         result["_ai_unavailable"] = False
 
         return result
 
     except Exception as e:
-        print(f"Groq unavailable: {e}")
 
-        # Do not crash the app when Streamlit/Groq network access is blocked.
+        print(
+            f"Groq unavailable: {e}"
+        )
+
         return create_analysis_fallback(
             problem,
             language,
@@ -593,8 +827,9 @@ Uploaded document text:
             rag_sources
         )
 
+
 # ============================================================
-# SEPARATE COMPLAINT GENERATOR
+# COMPLAINT GENERATOR
 # ============================================================
 
 def generate_complaint(
@@ -608,7 +843,8 @@ def generate_complaint(
     language_instruction = (
         "Write in English."
         if language == "English"
-        else "Write in natural, simple Urdu."
+        else
+        "Write in natural, simple Urdu."
     )
 
     prompt = f"""
@@ -650,6 +886,7 @@ Return only the complaint/application text.
 """
 
     try:
+
         response = client.responses.create(
             model=MODEL,
             input=prompt
@@ -658,15 +895,21 @@ Return only the complaint/application text.
         return response.output_text.strip()
 
     except Exception as e:
-        print(f"Groq complaint generation unavailable: {e}")
+
+        print(
+            f"Groq complaint generation unavailable: {e}"
+        )
 
         if language == "Urdu":
+
             return (
                 "Mohtaram Sir/Madam,\n\n"
-                "Main apne civic maslay ke silsilay mein darkhwast pesh karna chahta/chahti hoon.\n\n"
+                "Main apne civic maslay ke silsilay mein "
+                "darkhwast pesh karna chahta/chahti hoon.\n\n"
                 f"Masla: {issue_category}\n\n"
                 f"Tafseel: {explanation}\n\n"
-                "Barah-e-karam is matter ka jaiza le kar munasib action aur rehnumai faraham ki jaye.\n\n"
+                "Barah-e-karam is matter ka jaiza le kar "
+                "munasib action aur rehnumai faraham ki jaye.\n\n"
                 "Shukriya.\n"
                 "[Aap ka Naam]\n"
                 "[Date]"
@@ -674,15 +917,18 @@ Return only the complaint/application text.
 
         return (
             "To Whom It May Concern,\n\n"
-            "I would like to submit a complaint regarding the following civic issue.\n\n"
+            "I would like to submit a complaint regarding "
+            "the following civic issue.\n\n"
             f"Issue: {issue_category}\n\n"
             f"Details: {explanation}\n\n"
-            "Kindly review this matter and provide appropriate assistance and guidance.\n\n"
+            "Kindly review this matter and provide appropriate "
+            "assistance and guidance.\n\n"
             "Sincerely,\n"
             "[Your Name]\n"
             "[Your Address]\n"
             "[Date]"
         )
+
 
 # ============================================================
 # SESSION STATE
@@ -694,74 +940,122 @@ if "analysis" not in st.session_state:
 if "complaint" not in st.session_state:
     st.session_state.complaint = None
 
+
 # ============================================================
-# UI
+# MAIN HEADER
 # ============================================================
 
-st.title("🏛️ AwaamiAgent")
+st.markdown(
+    '<div class="main-title">🏛️ AwaamiAgent</div>',
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    '<div class="subtitle">'
+    'Your AI-powered civic assistance system'
+    '</div>',
+    unsafe_allow_html=True
+)
 
 st.markdown(
     """
-**Your AI civic assistant**
-
-Describe a civic problem in simple words.  
-AwaamiAgent will help you understand the issue and identify practical next steps.
+Describe a civic problem in simple words or upload a
+government/civic document. AwaamiAgent uses retrieved civic
+information to help you understand the issue, identify practical
+next steps, and prepare a complaint or application.
 """
 )
 
 st.info(
     "AwaamiAgent provides general civic assistance. "
-    "Jurisdiction-specific laws, procedures, deadlines, fees, and departments "
-    "should be verified through reliable official sources."
+    "Jurisdiction-specific laws, procedures, deadlines, fees, "
+    "and departments should always be verified through reliable "
+    "official sources."
 )
+
 
 # ============================================================
 # INPUT
 # ============================================================
 
+st.markdown(
+    "### 📝 Describe Your Problem"
+)
+
 problem = st.text_area(
-    "Describe your civic problem",
+    "Civic problem",
     placeholder=(
         "Example: My electricity bill is much higher than usual "
         "and I do not understand why."
     ),
-    height=160
+    height=160,
+    label_visibility="collapsed"
 )
+
 
 uploaded_file = st.file_uploader(
-    "Upload a civic/government document (optional)",
-    type=["pdf", "png", "jpg", "jpeg"],
-    help="Upload a PDF, scanned document, bill, notice, or image."
+    "📄 Upload a civic/government document (optional)",
+    type=[
+        "pdf",
+        "png",
+        "jpg",
+        "jpeg"
+    ],
+    help=(
+        "Upload a PDF, scanned document, bill, notice, "
+        "or image."
+    )
 )
 
+
 language = st.selectbox(
-    "Response language",
-    ["English", "Urdu"]
+    "🌐 Response language",
+    [
+        "English",
+        "Urdu"
+    ]
 )
+
 
 # ============================================================
 # ANALYZE BUTTON
 # ============================================================
 
-if st.button("🔎 Analyze Problem", type="primary"):
+if st.button(
+    "🔎 Analyze Problem",
+    type="primary",
+    use_container_width=True
+):
 
     if not problem.strip() and uploaded_file is None:
+
         st.warning(
             "Please describe your civic problem or upload a document."
         )
 
     else:
+
         st.session_state.analysis = None
         st.session_state.complaint = None
 
-        with st.spinner("AwaamiAgent is analyzing your problem..."):
+        with st.spinner(
+            "AwaamiAgent is analyzing your problem..."
+        ):
+
             try:
+
                 document_context = None
 
                 if uploaded_file is not None:
-                    with st.spinner("Reading uploaded document..."):
-                        document_context = process_uploaded_document(
-                            uploaded_file
+
+                    with st.spinner(
+                        "Reading uploaded document..."
+                    ):
+
+                        document_context = (
+                            process_uploaded_document(
+                                uploaded_file
+                            )
                         )
 
                 result = analyze_civic_problem(
@@ -773,13 +1067,18 @@ if st.button("🔎 Analyze Problem", type="primary"):
                 st.session_state.analysis = result
 
             except Exception as e:
+
                 st.error(
                     "Something went wrong while analyzing the problem."
                 )
-                st.caption(f"Technical error: {str(e)}")
+
+                st.caption(
+                    f"Technical error: {str(e)}"
+                )
+
 
 # ============================================================
-# DISPLAY RESULTS
+# DISPLAY ANALYSIS RESULTS
 # ============================================================
 
 if st.session_state.analysis:
@@ -788,19 +1087,64 @@ if st.session_state.analysis:
 
     st.divider()
 
+    # --------------------------------------------------------
+    # AI STATUS
+    # --------------------------------------------------------
+
     if result.get("_ai_unavailable"):
+
         st.warning(
-            "AI analysis service is temporarily unavailable. "
-            "AwaamiAgent is showing the available civic guidance and retrieved sources instead."
+            "The AI analysis service is temporarily unavailable. "
+            "AwaamiAgent is showing local civic guidance and "
+            "retrieved official-source information instead."
         )
 
-    st.subheader("📌 Issue Identified")
-    st.write(result.get("issue_category", "Not specified"))
+    else:
 
-    st.subheader("💡 What's happening?")
-    st.write(result.get("explanation", "No explanation available."))
+        st.success(
+            "AI analysis completed successfully."
+        )
 
-    st.subheader("🔎 Important Information")
+
+    # --------------------------------------------------------
+    # ISSUE
+    # --------------------------------------------------------
+
+    st.markdown(
+        "### 📌 Issue Identified"
+    )
+
+    st.write(
+        result.get(
+            "issue_category",
+            "Not specified"
+        )
+    )
+
+
+    # --------------------------------------------------------
+    # EXPLANATION
+    # --------------------------------------------------------
+
+    st.markdown(
+        "### 💡 What's Happening?"
+    )
+
+    st.write(
+        result.get(
+            "explanation",
+            "No explanation available."
+        )
+    )
+
+
+    # --------------------------------------------------------
+    # IMPORTANT INFORMATION
+    # --------------------------------------------------------
+
+    st.markdown(
+        "### 🔎 Important Information"
+    )
 
     important_information = result.get(
         "important_information",
@@ -808,12 +1152,27 @@ if st.session_state.analysis:
     )
 
     if important_information:
-        for item in important_information:
-            st.write(f"• {item}")
-    else:
-        st.write("No additional information provided.")
 
-    st.subheader("🧭 What should I do?")
+        for item in important_information:
+
+            st.write(
+                f"• {item}"
+            )
+
+    else:
+
+        st.write(
+            "No additional information provided."
+        )
+
+
+    # --------------------------------------------------------
+    # NEXT STEPS
+    # --------------------------------------------------------
+
+    st.markdown(
+        "### 🧭 What Should I Do?"
+    )
 
     next_steps = result.get(
         "next_steps",
@@ -821,12 +1180,30 @@ if st.session_state.analysis:
     )
 
     if next_steps:
-        for index, step in enumerate(next_steps, 1):
-            st.write(f"**{index}.** {step}")
-    else:
-        st.write("No next steps provided.")
 
-    st.subheader("📄 Documents / Information You May Need")
+        for index, step in enumerate(
+            next_steps,
+            1
+        ):
+
+            st.write(
+                f"**{index}.** {step}"
+            )
+
+    else:
+
+        st.write(
+            "No next steps provided."
+        )
+
+
+    # --------------------------------------------------------
+    # DOCUMENTS
+    # --------------------------------------------------------
+
+    st.markdown(
+        "### 📄 Documents / Information You May Need"
+    )
 
     required_documents = result.get(
         "required_documents",
@@ -834,24 +1211,42 @@ if st.session_state.analysis:
     )
 
     if required_documents:
+
         for item in required_documents:
-            st.write(f"• {item}")
+
+            st.write(
+                f"• {item}"
+            )
+
     else:
-        st.write("No specific documents identified.")
+
+        st.write(
+            "No specific documents identified."
+        )
+
 
     # --------------------------------------------------------
     # RAG SOURCES
     # --------------------------------------------------------
 
-    rag_sources = result.get("_rag_sources", [])
+    rag_sources = result.get(
+        "_rag_sources",
+        []
+    )
 
-    st.subheader("🔗 Official Civic Sources")
+    st.markdown(
+        "### 🔗 Official Civic Sources"
+    )
 
     if rag_sources:
-        st.subheader("🔗 Official Civic Sources")
 
         for source in rag_sources:
-            if isinstance(source, dict):
+
+            if isinstance(
+                source,
+                dict
+            ):
+
                 source_name = (
                     source.get("title")
                     or source.get("source")
@@ -859,51 +1254,102 @@ if st.session_state.analysis:
                     or "Official source"
                 )
 
-                source_url = source.get("url")
+                source_url = source.get(
+                    "url"
+                )
 
                 if source_url:
+
                     st.markdown(
                         f"- [{source_name}]({source_url})"
                     )
-                else:
-                    st.write(f"• {source_name}")
-            else:
-                st.write(f"• {source}")
 
-    st.subheader("📝 Initial Complaint / Application")
+                else:
+
+                    st.write(
+                        f"• {source_name}"
+                    )
+
+            else:
+
+                st.write(
+                    f"• {source}"
+                )
+
+    else:
+
+        st.caption(
+            "No matching official civic sources were returned."
+        )
+
+
+    # --------------------------------------------------------
+    # INITIAL COMPLAINT
+    # --------------------------------------------------------
+
+    st.markdown(
+        "### 📝 Initial Complaint / Application"
+    )
 
     st.text_area(
-        "AI-generated draft",
-        value=result.get("complaint", ""),
+        "Initial draft",
+        value=result.get(
+            "complaint",
+            ""
+        ),
         height=250,
         disabled=True
     )
 
+
+    # --------------------------------------------------------
+    # POLISHED COMPLAINT
+    # --------------------------------------------------------
+
     st.divider()
 
-    st.subheader("✍️ Generate a Polished Complaint")
+    st.markdown(
+        "### ✍️ Generate a Polished Complaint"
+    )
 
-    if st.button("Generate Complaint"):
+    if st.button(
+        "Generate Complaint",
+        use_container_width=True
+    ):
 
-        with st.spinner("Generating complaint..."):
+        with st.spinner(
+            "Preparing your complaint..."
+        ):
+
             try:
+
                 complaint = generate_complaint(
-                    result.get("issue_category", ""),
-                    result.get("explanation", ""),
+                    result.get(
+                        "issue_category",
+                        ""
+                    ),
+                    result.get(
+                        "explanation",
+                        ""
+                    ),
                     important_information,
                     language
                 )
 
                 st.session_state.complaint = complaint
+
                 st.rerun()
 
             except Exception as e:
+
                 st.error(
                     "Something went wrong while generating the complaint."
                 )
+
                 st.caption(
                     f"Technical error: {str(e)}"
                 )
+
 
 # ============================================================
 # DISPLAY POLISHED COMPLAINT
@@ -911,7 +1357,11 @@ if st.session_state.analysis:
 
 if st.session_state.complaint:
 
-    st.subheader("📄 Polished Complaint / Application")
+    st.divider()
+
+    st.markdown(
+        "### 📄 Polished Complaint / Application"
+    )
 
     st.text_area(
         "Your draft",
@@ -923,8 +1373,10 @@ if st.session_state.complaint:
         label="⬇️ Download Complaint as TXT",
         data=st.session_state.complaint,
         file_name="awaamiagent_complaint.txt",
-        mime="text/plain"
+        mime="text/plain",
+        use_container_width=True
     )
+
 
 # ============================================================
 # FOOTER
@@ -933,6 +1385,8 @@ if st.session_state.complaint:
 st.divider()
 
 st.caption(
-    "AwaamiAgent is an AI civic assistance tool and is not a government "
-    "authority or a substitute for professional legal advice."
+    "AwaamiAgent is an AI civic assistance tool and is not a "
+    "government authority or a substitute for professional "
+    "legal advice."
 )
+````
