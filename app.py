@@ -1151,6 +1151,14 @@ if st.session_state.analysis:
 
     result = st.session_state.analysis
 
+    if st.button(
+        "🔄 Start New Case",
+        use_container_width=True
+    ):
+        st.session_state.analysis = None
+        st.session_state.complaint = None
+        st.rerun()
+
     st.divider()
 
     # --------------------------------------------------------
