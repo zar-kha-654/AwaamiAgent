@@ -1173,6 +1173,38 @@ if st.session_state.analysis:
 
 
     # --------------------------------------------------------
+    # EVIDENCE & VERIFICATION
+    # --------------------------------------------------------
+
+    rag_sources = result.get(
+        "_rag_sources",
+        []
+    )
+
+    rag_evidence = bool(
+        result.get("important_information")
+    )
+
+    source_count = len(
+        rag_sources
+    )
+
+    st.info(
+        f"🛡️ **Evidence & Verification**\n\n"
+        f"**Official sources found:** {source_count}\n\n"
+        f"**Civic evidence retrieved:** "
+        f"{'Yes' if rag_evidence else 'No'}\n\n"
+        f"**AI analysis:** "
+        f"{'Unavailable — local fallback used' if result.get('_ai_unavailable') else 'Completed'}\n\n"
+        "**Verification:** Check case-specific details with the relevant official authority."
+    )
+
+
+    # --------------------------------------------------------
+    # ISSUE
+    # --------------------------------------------------------
+
+    # --------------------------------------------------------
     # ISSUE
     # --------------------------------------------------------
 
