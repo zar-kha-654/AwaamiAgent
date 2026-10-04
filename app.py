@@ -281,9 +281,6 @@ def process_uploaded_document(uploaded_file):
         raise ValueError(
             f"Could not process the uploaded document: {str(e)}"
         )
-# ============================================================
-# AI ANALYSIS
-# ============================================================
 
 # ============================================================
 # AI ANALYSIS
@@ -464,23 +461,22 @@ Uploaded document text:
             temperature=0.2
         )
 
-        raw_output = response.choices[0].message.content.strip()
+                raw_output = response.choices[0].message.content.strip()
 
         result = parse_json_response(
             raw_output
         )
 
-        # Preserve RAG sources so the UI can display them.
         result["_rag_sources"] = rag_sources
 
         return result
 
     except Exception as e:
 
-        print(
-            f"Groq API error: {e}"
-        )
+        st.error("GROQ ERROR")
+        st.exception(e)
 
+        raise
         # ----------------------------------------------------
         # FALLBACK WHEN GROQ IS UNAVAILABLE
         # ----------------------------------------------------
