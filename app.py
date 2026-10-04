@@ -464,12 +464,13 @@ Uploaded document text:
             temperature=0.2
         )
 
-                        raw_output = response.choices[0].message.content.strip()
+        raw_output = response.choices[0].message.content.strip()
 
         result = parse_json_response(
             raw_output
         )
 
+        # Preserve RAG sources so the UI can display them.
         result["_rag_sources"] = rag_sources
 
         return result
@@ -516,13 +517,14 @@ Uploaded document text:
             "required_documents": [],
 
             "complaint": (
-                     "AI complaint generation is temporarily unavailable. "
-                    "Please use the official information and enter your "
-                    "personal details before submitting a complaint."
-                 ),
+                "AI complaint generation is temporarily unavailable. "
+                "Please use the official information and enter your "
+                "personal details before submitting a complaint."
+            ),
 
-                "_rag_sources": rag_sources
+            "_rag_sources": rag_sources
         }
+
 
 def parse_json_response(text):
     """
@@ -897,7 +899,7 @@ if st.session_state.analysis:
 
     else:
         st.write("No additional information provided.")
-        # --------------------------------------------------------
+    # --------------------------------------------------------
     # OFFICIAL SOURCES
     # --------------------------------------------------------
 
