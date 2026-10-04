@@ -466,9 +466,13 @@ Uploaded document text:
 
         raw_output = response.choices[0].message.content.strip()
 
-        return parse_json_response(
-            raw_output
-        )
+        result = parse_json_response(
+    raw_output
+)
+
+result["_rag_sources"] = rag_sources
+
+return result
 
     except Exception as e:
 
@@ -512,10 +516,12 @@ Uploaded document text:
             "required_documents": [],
 
             "complaint": (
-                "AI complaint generation is temporarily unavailable. "
-                "Please use the official information and enter your "
-                "personal details before submitting a complaint."
-            )
+                     "AI complaint generation is temporarily unavailable. "
+                    "Please use the official information and enter your "
+                    "personal details before submitting a complaint."
+                 ),
+
+                "_rag_sources": rag_sources
         }
 
 def parse_json_response(text):
