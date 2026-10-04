@@ -377,7 +377,74 @@ def analyze_civic_problem(
     # GROQ PROMPT
     # --------------------------------------------------------
 
-    # KEEP YOUR EXISTING prompt = f""" ... """ HERE
+    prompt = f"""
+You are AwaamiAgent, an AI civic assistance system.
+
+Your job is to help an ordinary person understand a civic problem
+and identify practical next steps.
+
+{language_instruction}
+
+IMPORTANT SAFETY RULES:
+
+- Do not invent laws.
+- Do not invent government departments.
+- Do not invent deadlines.
+- Do not invent fees.
+- Do not invent procedures.
+- Do not claim uncertain information is verified.
+- If jurisdiction-specific information is missing, clearly say so.
+- Do not present the response as legal advice.
+- Give general practical guidance only.
+
+Return ONLY valid JSON using exactly these six fields:
+
+{{
+  "issue_category": "short category",
+  "explanation": "simple explanation of the problem",
+  "important_information": [
+    "important point 1",
+    "important point 2"
+  ],
+  "next_steps": [
+    "practical step 1",
+    "practical step 2"
+  ],
+  "required_documents": [
+    "document or information 1",
+    "document or information 2"
+  ],
+  "complaint": "short initial complaint/application draft"
+}}
+
+Keep the response concise.
+
+User's civic problem:
+
+{problem if problem.strip() else "No problem description provided."}
+
+Uploaded document metadata:
+
+{document_metadata}
+
+Official civic source evidence:
+
+{rag_context if rag_context else "No matching official source evidence was found."}
+
+IMPORTANT:
+
+Use the official civic source evidence above whenever it is relevant.
+
+Do not invent laws, procedures, deadlines, fees, or departments.
+
+If the official evidence does not contain enough information,
+clearly say that the information should be verified with the
+relevant official authority.
+
+Uploaded document text:
+
+{document_text}
+"""
 
     # --------------------------------------------------------
     # GROQ ANALYSIS
@@ -410,37 +477,7 @@ def analyze_civic_problem(
     except Exception as e:
         st.error("GROQ ERROR")
         st.exception(e)
-
         raise
-    # --------------------------------------------------------
-    # GROQ ANALYSIS
-    # --------------------------------------------------------
-    
-    try:
-        test = requests.get("https://api.groq.com", timeout=10)
-        st.write("Groq connectivity:", test.status_code)
-        st.write("Groq response:", test.text[:300])
-    except Exception as e:
-        st.error("Groq connectivity test failed")
-        st.exception(e)
-
-    response = client.responses.create(
-        model=MODEL,
-        input=prompt
-    )
-
-    raw_output = response.output_text.strip()
-
-    result = parse_json_response(raw_output)
-
-    result["_rag_sources"] = rag_sources
-
-    return result
-
-except Exception as e:
-    st.error("GROQ ERROR")
-    st.exception(e)
-    raise
 def parse_json_response(text):
     """
     Parse JSON even if the model accidentally surrounds it
