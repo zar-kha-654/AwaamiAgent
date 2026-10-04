@@ -411,20 +411,45 @@ Uploaded document text:
 {document_text}
 """
 
+    try:
     response = client.chat.completions.create(
         model=MODEL,
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
+        messages=[{"role": "user", "content": prompt}],
         temperature=0.2
     )
 
     raw_output = response.choices[0].message.content.strip()
-
     return parse_json_response(raw_output)
+
+except Exception as e:
+    print(f"Groq API error: {e}")
+
+    # Keep the app functional even if Groq is temporarily unavailable
+    if rag_context:
+        return {
+            "issue_category": "Civic issue",
+            "explanation": (
+                "AwaamiAgent retrieved relevant information from its "
+                "official civic knowledge base, but the AI analysis "
+                "service is currently unavailable."
+            ),
+            "important_information": [
+                "Official source information was retrieved successfully.",
+                "Please review the official evidence below."
+            ],
+            "next_steps": [
+                "Review the retrieved official source information.",
+                "Verify the applicable procedure with the relevant authority."
+            ],
+            "required_documents": [],
+            "complaint": (
+                "AI complaint generation is temporarily unavailable. "
+                "Please use the official source information to prepare "
+                "your application or complaint."
+            )
+        }
+
+    raise
 
 
 # ============================================================
