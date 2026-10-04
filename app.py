@@ -498,21 +498,75 @@ if "complaint" not in st.session_state:
 # UI
 # ============================================================
 
-st.title("🏛️ AwaamiAgent")
-
 st.markdown(
     """
-**Your AI civic assistant**
-
-Describe a civic problem in simple words.  
-AwaamiAgent will help you understand the issue and identify practical next steps.
-"""
+    <div class="awaami-title">🏛️ AwaamiAgent</div>
+    <div class="awaami-subtitle">
+        AI-powered civic assistance to help citizens understand problems,
+        find practical next steps, and prepare complaints.
+    </div>
+    """,
+    unsafe_allow_html=True
 )
+with st.sidebar:
+
+    st.markdown("## 🏛️ AwaamiAgent")
+
+    st.markdown(
+        """
+        Your civic assistance companion.
+
+        Describe a civic problem or upload a supporting document,
+        and AwaamiAgent will help you understand the situation.
+        """
+    )
+
+    st.divider()
+
+    st.markdown("### How it works")
+
+    st.markdown(
+        """
+        **1. Describe**  
+        Tell us what happened.
+
+        **2. Analyze**  
+        AwaamiAgent examines the information.
+
+        **3. Understand**  
+        Get a simple explanation.
+
+        **4. Act**  
+        Review practical next steps and prepare a complaint.
+        """
+    )
+
+    st.divider()
+
+    st.markdown("### Supported documents")
+
+    st.markdown(
+        """
+        - PDF documents
+        - PNG images
+        - JPG/JPEG images
+        - Scanned civic documents
+        - Bills and notices
+        """
+    )
+
+    st.divider()
+
+    st.caption(
+        "AwaamiAgent provides general civic assistance. "
+        "Always verify jurisdiction-specific information through "
+        "reliable official sources."
+    )
 
 st.info(
-    "AwaamiAgent provides general civic assistance. "
-    "Jurisdiction-specific laws, procedures, deadlines, fees, and departments "
-    "should be verified through reliable official sources."
+    "ℹ️ AwaamiAgent provides general civic assistance. "
+    "Laws, procedures, deadlines, fees, and responsible departments "
+    "should always be verified through reliable official sources."
 )
 
 
@@ -520,32 +574,62 @@ st.info(
 # INPUT
 # ============================================================
 
+st.markdown(
+    """
+    <div class="section-card">
+        <div class="section-title">📝 Describe Your Civic Problem</div>
+        <div class="section-description">
+            Explain your problem in simple words. You can mention what happened,
+            where the problem occurred, and any important details you know.
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 problem = st.text_area(
-    "Describe your civic problem",
+    "Your problem",
     placeholder=(
         "Example: My electricity bill is much higher than usual "
         "and I do not understand why."
     ),
-    height=160
+    height=150,
+    label_visibility="collapsed"
+)
+
+st.markdown(
+    """
+    <div class="section-card">
+        <div class="section-title">📎 Supporting Document</div>
+        <div class="section-description">
+            Have a bill, notice, scanned document, or other relevant file?
+            Upload it here for additional context.
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
 )
 
 uploaded_file = st.file_uploader(
-    "Upload a civic/government document (optional)",
+    "Choose a supporting document",
     type=["pdf", "png", "jpg", "jpeg"],
     help="Upload a PDF, scanned document, bill, notice, or image."
 )
 
 language = st.selectbox(
-    "Response language",
+    "🌐 Response language",
     ["English", "Urdu"]
 )
-
 
 # ============================================================
 # ANALYZE BUTTON
 # ============================================================
 
-if st.button("🔎 Analyze Problem", type="primary"):
+if st.button(
+    "🔎 Analyze My Problem",
+    type="primary",
+    use_container_width=True
+):
 
     if not problem.strip() and uploaded_file is None:
         st.warning(
@@ -591,13 +675,44 @@ if st.session_state.analysis:
 
     st.divider()
 
-    st.subheader("📌 Issue Identified")
-    st.write(result.get("issue_category", "Not specified"))
+    st.markdown("## 📊 Your Civic Assessment")
 
-    st.subheader("💡 What's happening?")
-    st.write(result.get("explanation", "No explanation available."))
+    # --------------------------------------------------------
+    # ISSUE IDENTIFIED
+    # --------------------------------------------------------
 
-    st.subheader("🔎 Important Information")
+    st.markdown(
+        f"""
+        <div class="result-card">
+            <div class="result-label">Issue Identified</div>
+            <div class="result-value">
+                {result.get("issue_category", "Not specified")}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # --------------------------------------------------------
+    # EXPLANATION
+    # --------------------------------------------------------
+
+    st.markdown("### 💡 What's happening?")
+
+    st.markdown(
+        f"""
+        <div class="result-card">
+            {result.get("explanation", "No explanation available.")}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # --------------------------------------------------------
+    # IMPORTANT INFORMATION
+    # --------------------------------------------------------
+
+    st.markdown("### 🔎 Important Information")
 
     important_information = result.get(
         "important_information",
@@ -605,12 +720,26 @@ if st.session_state.analysis:
     )
 
     if important_information:
+
         for item in important_information:
-            st.write(f"• {item}")
+
+            st.markdown(
+                f"""
+                <div class="result-card">
+                    • {item}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
     else:
         st.write("No additional information provided.")
 
-    st.subheader("🧭 What should I do?")
+    # --------------------------------------------------------
+    # NEXT STEPS
+    # --------------------------------------------------------
+
+    st.markdown("### 🧭 What You Can Do Next")
 
     next_steps = result.get(
         "next_steps",
@@ -618,12 +747,27 @@ if st.session_state.analysis:
     )
 
     if next_steps:
+
         for index, step in enumerate(next_steps, 1):
-            st.write(f"**{index}.** {step}")
+
+            st.markdown(
+                f"""
+                <div class="result-card">
+                    <strong>Step {index}</strong><br>
+                    {step}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
     else:
         st.write("No next steps provided.")
 
-    st.subheader("📄 Documents / Information You May Need")
+    # --------------------------------------------------------
+    # REQUIRED DOCUMENTS
+    # --------------------------------------------------------
+
+    st.markdown("### 📄 Documents / Information You May Need")
 
     required_documents = result.get(
         "required_documents",
@@ -631,12 +775,26 @@ if st.session_state.analysis:
     )
 
     if required_documents:
+
         for item in required_documents:
-            st.write(f"• {item}")
+
+            st.markdown(
+                f"""
+                <div class="result-card">
+                    • {item}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
     else:
         st.write("No specific documents identified.")
 
-    st.subheader("📝 Initial Complaint / Application")
+    # --------------------------------------------------------
+    # INITIAL COMPLAINT
+    # --------------------------------------------------------
+
+    st.markdown("### 📝 Initial Complaint / Application")
 
     st.text_area(
         "AI-generated draft",
@@ -647,13 +805,27 @@ if st.session_state.analysis:
 
     st.divider()
 
-    st.subheader("✍️ Generate a Polished Complaint")
+    # --------------------------------------------------------
+    # POLISHED COMPLAINT
+    # --------------------------------------------------------
 
-    if st.button("Generate Complaint"):
+    st.markdown("## ✍️ Prepare Your Complaint")
+
+    st.caption(
+        "Turn the analyzed information into a more polished "
+        "complaint or application."
+    )
+
+    if st.button(
+        "📝 Generate Polished Complaint",
+        type="primary",
+        use_container_width=True
+    ):
 
         with st.spinner("Generating complaint..."):
 
             try:
+
                 complaint = generate_complaint(
                     result.get("issue_category", ""),
                     result.get("explanation", ""),
@@ -664,11 +836,14 @@ if st.session_state.analysis:
                 st.session_state.complaint = complaint
 
             except Exception as e:
+
                 st.error(
                     "Something went wrong while generating the complaint."
                 )
 
-                st.caption(f"Technical error: {str(e)}")
+                st.caption(
+                    f"Technical error: {str(e)}"
+                )
 
 
 # ============================================================
@@ -677,19 +852,20 @@ if st.session_state.analysis:
 
 if st.session_state.complaint:
 
-    st.subheader("📄 Polished Complaint / Application")
+    st.markdown("## 📄 Polished Complaint / Application")
 
     st.text_area(
-        "Your draft",
+        "Your complaint/application",
         value=st.session_state.complaint,
         height=400
     )
 
     st.download_button(
-        label="⬇️ Download Complaint as TXT",
+        label="⬇️ Download Complaint",
         data=st.session_state.complaint,
         file_name="awaamiagent_complaint.txt",
-        mime="text/plain"
+        mime="text/plain",
+        use_container_width=True
     )
 
 
@@ -699,7 +875,14 @@ if st.session_state.complaint:
 
 st.divider()
 
-st.caption(
-    "AwaamiAgent is an AI civic assistance tool and is not a government "
-    "authority or a substitute for professional legal advice."
+st.markdown(
+    """
+    <div class="footer">
+        <strong>AwaamiAgent</strong> — Helping citizens understand,
+        verify, and act on civic issues.<br>
+        This tool provides general civic assistance and is not a government
+        authority or a substitute for professional legal advice.
+    </div>
+    """,
+    unsafe_allow_html=True
 )
