@@ -1250,40 +1250,63 @@ if st.session_state.analysis:
 
     if rag_sources:
 
+        displayed_sources = set()
+
         for source in rag_sources:
 
-            if isinstance(
-                source,
-                dict
-            ):
+            source_name = None
+            source_url = None
+
+            if isinstance(source, dict):
 
                 source_name = (
                     source.get("title")
                     or source.get("source")
                     or source.get("name")
-                    or "Official source"
+                    or source.get("source_name")
+                    or source.get("Source Name")
                 )
 
-                source_url = source.get(
-                    "url"
+                source_url = (
+                    source.get("url")
+                    or source.get("source_url")
+                    or source.get("official_url")
+                    or source.get("Official URL")
                 )
 
-                if source_url:
+            elif isinstance(source, str):
 
-                    st.markdown(
-                        f"- [{source_name}]({source_url})"
-                    )
+                # Handle source information returned as plain text.
+                source_text = source.strip()
 
-                else:
+                if source_text:
+                    source_name = source_text
 
-                    st.write(
-                        f"• {source_name}"
-                    )
+            if not source_name:
+                source_name = "Official civic source"
+
+            # Avoid displaying the same source more than once.
+            source_key = (
+                str(source_name),
+                str(source_url)
+            )
+
+            if source_key in displayed_sources:
+                continue
+
+            displayed_sources.add(source_key)
+
+            if source_url:
+
+                st.markdown(
+                    f"- **{source_name}**  \n"
+                    f"  [Open official source]({source_url})"
+                )
 
             else:
 
                 st.write(
-                    f"• {source}"
+                    f"• {source_name}"
                 )
 
     else:
@@ -1291,8 +1314,6 @@ if st.session_state.analysis:
         st.caption(
             "No matching official civic sources were returned."
         )
-
-
     # --------------------------------------------------------
     # INITIAL COMPLAINT
     # --------------------------------------------------------
