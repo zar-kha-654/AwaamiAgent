@@ -175,22 +175,7 @@ if not api_key:
 
 
 client = Groq(api_key=api_key)
-try:
-    import requests
 
-    test = requests.get(
-        "https://api.groq.com/openai/v1/models",
-        headers={
-            "Authorization": f"Bearer {api_key}"
-        },
-        timeout=20
-    )
-
-    print("GROQ HTTP STATUS:", test.status_code)
-    print("GROQ HTTP RESPONSE:", test.text[:500])
-
-except Exception as e:
-    print("GROQ NETWORK ERROR:", repr(e))
 # ============================================================
 # RAG KNOWLEDGE BASE
 # ============================================================
@@ -300,13 +285,19 @@ def process_uploaded_document(uploaded_file):
 # AI ANALYSIS
 # ============================================================
 
+# ============================================================
+# AI ANALYSIS
+# ============================================================
+
 def analyze_civic_problem(
     problem,
     language,
     document_context=None
 ):
     """
-    Analyze a user's civic problem and return structured JSON.
+    Analyze a user's civic problem using RAG + Groq.
+    If Groq is unavailable, return the official RAG evidence
+    instead of crashing the application.
     """
 
     language_instruction = (
@@ -315,12 +306,23 @@ def analyze_civic_problem(
         else "Respond in natural, simple Urdu. Keep important English terms "
              "in parentheses when useful."
     )
+
+    # --------------------------------------------------------
+    # DOCUMENT CONTEXT
+    # --------------------------------------------------------
+
     if document_context:
 
-        document_text = document_context.get("text", "")
+        document_text = document_context.get(
+            "text",
+            ""
+        )
 
         document_metadata = json.dumps(
-            document_context.get("metadata", {}),
+            document_context.get(
+                "metadata",
+                {}
+            ),
             ensure_ascii=False,
             indent=2
         )
@@ -328,29 +330,53 @@ def analyze_civic_problem(
     else:
 
         document_text = "No document uploaded."
-
         document_metadata = "{}"
-            # ========================================================
+
+    # --------------------------------------------------------
     # RAG RETRIEVAL
-    # ========================================================
+    # --------------------------------------------------------
 
     rag_context = ""
     rag_sources = []
 
     try:
-        rag_result = query_civic_rag(
-            problem.strip(),
-            top_k=5
-        )
 
-        rag_context = rag_result.get("context", "")
-        rag_sources = rag_result.get("sources", [])
+        # If the user only uploaded a document, use its text
+        # as the RAG query instead of an empty problem.
+        rag_query = problem.strip()
+
+        if not rag_query and document_text:
+            rag_query = document_text[:3000]
+
+        if rag_query:
+
+            rag_result = query_civic_rag(
+                rag_query,
+                top_k=5
+            )
+
+            rag_context = rag_result.get(
+                "context",
+                ""
+            )
+
+            rag_sources = rag_result.get(
+                "sources",
+                []
+            )
 
     except Exception as e:
+
+        print(
+            f"RAG retrieval error: {e}"
+        )
+
         rag_context = ""
         rag_sources = []
 
-        print(f"RAG retrieval error: {e}")
+    # --------------------------------------------------------
+    # GROQ PROMPT
+    # --------------------------------------------------------
 
     prompt = f"""
 You are AwaamiAgent, an AI civic assistance system.
@@ -361,6 +387,7 @@ and identify practical next steps.
 {language_instruction}
 
 IMPORTANT SAFETY RULES:
+
 - Do not invent laws.
 - Do not invent government departments.
 - Do not invent deadlines.
@@ -392,69 +419,104 @@ Return ONLY valid JSON using exactly these six fields:
 }}
 
 Keep the response concise.
+
 User's civic problem:
+
 {problem if problem.strip() else "No problem description provided."}
 
 Uploaded document metadata:
+
 {document_metadata}
 
 Official civic source evidence:
+
 {rag_context if rag_context else "No matching official source evidence was found."}
 
-Important instruction:
+IMPORTANT:
+
 Use the official civic source evidence above whenever it is relevant.
+
 Do not invent laws, procedures, deadlines, fees, or departments.
-If the official evidence does not contain enough information, clearly say that
-the information should be verified with the relevant official authority.
+
+If the official evidence does not contain enough information,
+clearly say that the information should be verified with the
+relevant official authority.
 
 Uploaded document text:
+
 {document_text}
 """
 
+    # --------------------------------------------------------
+    # GROQ ANALYSIS
+    # --------------------------------------------------------
+
     try:
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.2
-    )
 
-    raw_output = response.choices[0].message.content.strip()
-    return parse_json_response(raw_output)
+        response = client.chat.completions.create(
+            model=MODEL,
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            temperature=0.2
+        )
 
-except Exception as e:
-    print(f"Groq API error: {e}")
+        raw_output = response.choices[0].message.content.strip()
 
-    # Keep the app functional even if Groq is temporarily unavailable
-    if rag_context:
+        return parse_json_response(
+            raw_output
+        )
+
+    except Exception as e:
+
+        print(
+            f"Groq API error: {e}"
+        )
+
+        # ----------------------------------------------------
+        # FALLBACK WHEN GROQ IS UNAVAILABLE
+        # ----------------------------------------------------
+
         return {
-            "issue_category": "Civic issue",
+            "issue_category": "Civic Issue",
+
             "explanation": (
-                "AwaamiAgent retrieved relevant information from its "
-                "official civic knowledge base, but the AI analysis "
-                "service is currently unavailable."
+                "AwaamiAgent retrieved information from its "
+                "official civic knowledge base. The AI analysis "
+                "service is temporarily unavailable, so the "
+                "retrieved information is shown without additional "
+                "AI interpretation."
             ),
-            "important_information": [
-                "Official source information was retrieved successfully.",
-                "Please review the official evidence below."
-            ],
+
+            "important_information": (
+                [
+                    "Relevant official civic information was retrieved."
+                ]
+                if rag_context
+                else
+                [
+                    "No matching official civic source evidence "
+                    "was retrieved."
+                ]
+            ),
+
             "next_steps": [
-                "Review the retrieved official source information.",
-                "Verify the applicable procedure with the relevant authority."
+                "Review the available official source information.",
+                "Verify the applicable procedure with the relevant "
+                "government authority before taking action."
             ],
+
             "required_documents": [],
+
             "complaint": (
                 "AI complaint generation is temporarily unavailable. "
-                "Please use the official source information to prepare "
-                "your application or complaint."
+                "Please use the official information and enter your "
+                "personal details before submitting a complaint."
             )
         }
-
-    raise
-
-
-# ============================================================
-# JSON PARSER
-# ============================================================
 
 def parse_json_response(text):
     """
