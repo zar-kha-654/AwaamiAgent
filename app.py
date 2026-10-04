@@ -1,10 +1,9 @@
-
 import os
 import json
 import re
 import io
-import requests
 import streamlit as st
+
 from rag.knowledge_base import ensure_knowledge_base
 from rag.rag_pipeline import query_civic_rag
 from openai import OpenAI
@@ -18,142 +17,22 @@ import pytesseract
 
 MODEL = "openai/gpt-oss-120b"
 
-
 # ============================================================
 # PAGE CONFIGURATION
 # ============================================================
 
 st.set_page_config(
-    page_title="AwaamiAgent | Civic Assistance",
+    page_title="AwaamiAgent",
     page_icon="🏛️",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="centered"
 )
-# ============================================================
-# CUSTOM UI STYLING
-# ============================================================
-
-st.markdown("""
-<style>
-
-    /* Main application */
-    .main {
-        background-color: #f8fafc;
-    }
-
-    /* Main content width */
-    .block-container {
-        max-width: 1100px;
-        padding-top: 2rem;
-        padding-bottom: 3rem;
-    }
-
-    /* Main title */
-    .awaami-title {
-        font-size: 2.7rem;
-        font-weight: 800;
-        margin-bottom: 0.2rem;
-        letter-spacing: -1px;
-    }
-
-    .awaami-subtitle {
-        font-size: 1.05rem;
-        color: #64748b;
-        margin-bottom: 1.5rem;
-    }
-
-    /* Section cards */
-    .section-card {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        padding: 1.4rem;
-        margin: 1rem 0;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
-    }
-
-    .section-title {
-        font-size: 1.25rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-    }
-
-    .section-description {
-        color: #64748b;
-        font-size: 0.95rem;
-        margin-bottom: 1rem;
-    }
-
-    /* Result cards */
-    .result-card {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        padding: 1.3rem;
-        margin: 0.8rem 0;
-    }
-
-    .result-label {
-        font-size: 0.85rem;
-        font-weight: 700;
-        color: #64748b;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 0.4rem;
-    }
-
-    .result-value {
-        font-size: 1.1rem;
-        font-weight: 600;
-    }
-
-    /* Small feature badges */
-    .feature-badge {
-        display: inline-block;
-        padding: 0.35rem 0.7rem;
-        margin: 0.2rem;
-        border-radius: 999px;
-        background: #eef2ff;
-        color: #3730a3;
-        font-size: 0.8rem;
-        font-weight: 600;
-    }
-
-    /* Footer */
-    .footer {
-        text-align: center;
-        color: #64748b;
-        font-size: 0.82rem;
-        padding: 1.5rem 0 0.5rem 0;
-    }
-
-    /* Improve buttons */
-    .stButton > button {
-        border-radius: 9px;
-        font-weight: 600;
-        min-height: 2.7rem;
-    }
-
-    /* Upload area */
-    [data-testid="stFileUploader"] {
-        border-radius: 12px;
-    }
-
-</style>
-""", unsafe_allow_html=True)
-
 
 # ============================================================
 # API KEY
 # ============================================================
 
 def get_api_key():
-    """
-    Get the Groq API key from:
-    1. Streamlit Secrets during deployment
-    2. Environment variable during Colab/local development
-    """
-
+    """Get Groq API key from Streamlit Secrets or environment."""
     try:
         api_key = st.secrets.get("GROQ_API_KEY")
     except Exception:
@@ -170,7 +49,7 @@ api_key = get_api_key()
 if not api_key:
     st.error(
         "GROQ_API_KEY is not configured. "
-        "Add it to the environment or Streamlit Secrets."
+        "Add it to Streamlit Secrets or the environment."
     )
     st.stop()
 
@@ -191,7 +70,6 @@ def load_rag_knowledge_base():
 
 try:
     rag_status = load_rag_knowledge_base()
-
 except Exception as e:
     rag_status = None
     st.warning(
@@ -206,18 +84,14 @@ except Exception as e:
 
 def extract_pdf_text(file_bytes):
     """Extract selectable text from a PDF."""
-    
     reader = PdfReader(io.BytesIO(file_bytes))
 
     pages = []
     for page in reader.pages:
-        text = page.extract_text() or ""
-        pages.append(text)
-
-    full_text = "\n\n".join(pages).strip()
+        pages.append(page.extract_text() or "")
 
     return {
-        "text": full_text,
+        "text": "\n\n".join(pages).strip(),
         "page_count": len(reader.pages),
         "extraction_method": "pdf_text"
     }
@@ -225,7 +99,6 @@ def extract_pdf_text(file_bytes):
 
 def extract_image_text(file_bytes):
     """Extract text from an image using OCR."""
-    
     image = Image.open(io.BytesIO(file_bytes))
 
     text = pytesseract.image_to_string(
@@ -242,7 +115,6 @@ def extract_image_text(file_bytes):
 
 def process_uploaded_document(uploaded_file):
     """Process an uploaded PDF or image."""
-
     if uploaded_file is None:
         return None
 
@@ -255,16 +127,10 @@ def process_uploaded_document(uploaded_file):
     }
 
     try:
-
         if uploaded_file.type == "application/pdf":
-
             result = extract_pdf_text(file_bytes)
 
-        elif uploaded_file.type in [
-            "image/png",
-            "image/jpeg"
-        ]:
-
+        elif uploaded_file.type in ["image/png", "image/jpeg"]:
             result = extract_image_text(file_bytes)
 
         else:
@@ -281,13 +147,123 @@ def process_uploaded_document(uploaded_file):
         }
 
     except Exception as e:
-
         raise ValueError(
             f"Could not process the uploaded document: {str(e)}"
         )
 
 # ============================================================
-# AI ANALYSIS
+# JSON PARSER
+# ============================================================
+
+def parse_json_response(text):
+    """Parse JSON even if the model returns markdown code fences."""
+    cleaned = re.sub(
+        r"^```(?:json)?\s*|\s*```$",
+        "",
+        text.strip(),
+        flags=re.IGNORECASE
+    )
+
+    try:
+        result = json.loads(cleaned)
+    except json.JSONDecodeError:
+        start = cleaned.find("{")
+        end = cleaned.rfind("}")
+
+        if start == -1 or end == -1:
+            raise ValueError("The AI returned an invalid JSON response.")
+
+        try:
+            result = json.loads(cleaned[start:end + 1])
+        except json.JSONDecodeError:
+            raise ValueError("The AI returned an invalid JSON response.")
+
+    required_fields = [
+        "issue_category",
+        "explanation",
+        "important_information",
+        "next_steps",
+        "required_documents",
+        "complaint"
+    ]
+
+    for field in required_fields:
+        if field not in result:
+            result[field] = []
+
+    return result
+
+# ============================================================
+# LOCAL FALLBACK
+# ============================================================
+
+def create_analysis_fallback(problem, language, rag_context, rag_sources):
+    """Return a useful result when Groq is temporarily unavailable."""
+
+    if language == "Urdu":
+        explanation = (
+            "AwaamiAgent ka AI analysis service is waqt available nahi hai. "
+            "Neeche retrieved official civic information ko review karein "
+            "aur zaroori details relevant official authority se verify karein."
+        )
+        important = [
+            "Official civic source information ko review karein.",
+            "Important details ko relevant official authority se verify karein."
+        ]
+        next_steps = [
+            "Retrieved official information ko check karein.",
+            "Relevant government department ya authority se contact karein.",
+            "Apne relevant documents aur evidence ki copies rakhein."
+        ]
+        documents = [
+            "Relevant identification document",
+            "Complaint se related supporting documents"
+        ]
+        complaint = (
+            "Mohtaram Sir/Madam,\n\n"
+            "Main apne civic maslay ke silsilay mein darkhwast pesh karna chahta/chahti hoon.\n"
+            "Barah-e-karam is matter ka jaiza le kar munasib rehnumai aur action faraham kiya jaye.\n\n"
+            "Shukriya."
+        )
+    else:
+        explanation = (
+            "AwaamiAgent's AI analysis service is temporarily unavailable. "
+            "The retrieved official civic information can still be reviewed, "
+            "and important details should be verified with the relevant authority."
+        )
+        important = [
+            "Review the official civic source information retrieved by AwaamiAgent.",
+            "Verify important details with the relevant official authority."
+        ]
+        next_steps = [
+            "Review the retrieved official information.",
+            "Contact the relevant government department or authority.",
+            "Keep copies of relevant documents and supporting evidence."
+        ]
+        documents = [
+            "Relevant identification document",
+            "Supporting documents related to the complaint"
+        ]
+        complaint = (
+            "To Whom It May Concern,\n\n"
+            "I would like to submit a complaint regarding the civic issue described above. "
+            "Kindly review the matter and provide appropriate assistance.\n\n"
+            "Sincerely,\n[Your Name]"
+        )
+
+    return {
+        "issue_category": "Civic Issue",
+        "explanation": explanation,
+        "important_information": important,
+        "next_steps": next_steps,
+        "required_documents": documents,
+        "complaint": complaint,
+        "_rag_sources": rag_sources,
+        "_ai_unavailable": True
+    }
+
+# ============================================================
+# AI CIVIC ANALYSIS
 # ============================================================
 
 def analyze_civic_problem(
@@ -295,11 +271,7 @@ def analyze_civic_problem(
     language,
     document_context=None
 ):
-    """
-    Analyze a user's civic problem using RAG + Groq.
-    If Groq is unavailable, return the official RAG evidence
-    instead of crashing the application.
-    """
+    """Analyze a civic problem using Civic RAG + Groq."""
 
     language_instruction = (
         "Respond in English."
@@ -313,63 +285,40 @@ def analyze_civic_problem(
     # --------------------------------------------------------
 
     if document_context:
-
-        document_text = document_context.get(
-            "text",
-            ""
-        )
-
+        document_text = document_context.get("text", "")
         document_metadata = json.dumps(
-            document_context.get(
-                "metadata",
-                {}
-            ),
+            document_context.get("metadata", {}),
             ensure_ascii=False,
             indent=2
         )
-
     else:
-
         document_text = "No document uploaded."
         document_metadata = "{}"
 
     # --------------------------------------------------------
-    # RAG RETRIEVAL
+    # CIVIC RAG
     # --------------------------------------------------------
 
     rag_context = ""
     rag_sources = []
 
     try:
-
         rag_query = problem.strip()
 
         if not rag_query and document_text:
             rag_query = document_text[:3000]
 
         if rag_query:
-
             rag_result = query_civic_rag(
                 rag_query,
                 top_k=5
             )
 
-            rag_context = rag_result.get(
-                "context",
-                ""
-            )
-
-            rag_sources = rag_result.get(
-                "sources",
-                []
-            )
+            rag_context = rag_result.get("context", "")
+            rag_sources = rag_result.get("sources", [])
 
     except Exception as e:
-
-        print(
-            f"RAG retrieval error: {e}"
-        )
-
+        print(f"RAG retrieval error: {e}")
         rag_context = ""
         rag_sources = []
 
@@ -386,7 +335,6 @@ and identify practical next steps.
 {language_instruction}
 
 IMPORTANT SAFETY RULES:
-
 - Do not invent laws.
 - Do not invent government departments.
 - Do not invent deadlines.
@@ -420,29 +368,22 @@ Return ONLY valid JSON using exactly these six fields:
 Keep the response concise.
 
 User's civic problem:
-
 {problem if problem.strip() else "No problem description provided."}
 
 Uploaded document metadata:
-
 {document_metadata}
 
 Official civic source evidence:
-
 {rag_context if rag_context else "No matching official source evidence was found."}
 
 IMPORTANT:
-
 Use the official civic source evidence above whenever it is relevant.
-
 Do not invent laws, procedures, deadlines, fees, or departments.
-
 If the official evidence does not contain enough information,
 clearly say that the information should be verified with the
 relevant official authority.
 
 Uploaded document text:
-
 {document_text}
 """
 
@@ -451,77 +392,28 @@ Uploaded document text:
     # --------------------------------------------------------
 
     try:
-        test = requests.get(
-            "https://api.groq.com",
-            timeout=10
-        )
-
-        st.write("Groq connectivity:", test.status_code)
-        st.write("Groq response:", test.text[:300])
-
         response = client.responses.create(
             model=MODEL,
             input=prompt
         )
 
         raw_output = response.output_text.strip()
-
-        result = parse_json_response(
-            raw_output
-        )
-
+        result = parse_json_response(raw_output)
         result["_rag_sources"] = rag_sources
+        result["_ai_unavailable"] = False
 
         return result
 
     except Exception as e:
-        st.error("GROQ ERROR")
-        st.exception(e)
-        raise
-def parse_json_response(text):
-    """
-    Parse JSON even if the model accidentally surrounds it
-    with markdown code fences.
-    """
+        print(f"Groq unavailable: {e}")
 
-    # Remove markdown code fences if present
-    cleaned = re.sub(
-        r"^```(?:json)?\s*|\s*```$",
-        "",
-        text.strip(),
-        flags=re.IGNORECASE
-    )
-
-    try:
-        result = json.loads(cleaned)
-    except json.JSONDecodeError:
-        # Try to locate the JSON object
-        start = cleaned.find("{")
-        end = cleaned.rfind("}")
-
-        if start == -1 or end == -1:
-            raise ValueError("The AI returned an invalid JSON response.")
-
-        try:
-            result = json.loads(cleaned[start:end + 1])
-        except json.JSONDecodeError:
-            raise ValueError("The AI returned an invalid JSON response.")
-
-    required_fields = [
-        "issue_category",
-        "explanation",
-        "important_information",
-        "next_steps",
-        "required_documents",
-        "complaint"
-    ]
-
-    for field in required_fields:
-        if field not in result:
-            result[field] = []
-
-    return result
-
+        # Do not crash the app when Streamlit/Groq network access is blocked.
+        return create_analysis_fallback(
+            problem,
+            language,
+            rag_context,
+            rag_sources
+        )
 
 # ============================================================
 # SEPARATE COMPLAINT GENERATOR
@@ -533,73 +425,87 @@ def generate_complaint(
     important_information,
     language
 ):
-    """
-    Generate a polished complaint/application locally.
-    This does not require the Groq API.
-    """
+    """Generate a polished complaint without inventing facts."""
 
-    information = "\n".join(
-        f"- {item}"
-        for item in important_information
+    language_instruction = (
+        "Write in English."
+        if language == "English"
+        else "Write in natural, simple Urdu."
     )
 
-    if language == "Urdu":
+    prompt = f"""
+You are AwaamiAgent's complaint drafting assistant.
 
-        return f"""درخواست / شکایت
+{language_instruction}
 
-موضوع: {issue_category}
+Create a professional complaint/application based ONLY on the
+information provided below.
 
-محترم متعلقہ افسر،
-
-میں اس مسئلے کے حوالے سے درخواست/شکایت پیش کرنا چاہتا/چاہتی ہوں۔
-
-مسئلے کی تفصیل:
-{explanation}
-
-اہم معلومات:
-{information}
-
-براہِ کرم اس معاملے کا جائزہ لے کر ضروری کارروائی اور رہنمائی فراہم کی جائے۔
-
-شکریہ۔
-
-نام: [آپ کا نام]
-پتہ: [آپ کا پتہ]
-رابطہ نمبر: [آپ کا فون نمبر]
-اکاؤنٹ/ریفرنس نمبر: [اگر قابل اطلاق ہو]
-تاریخ: [تاریخ]
-"""
-
-    return f"""COMPLAINT / APPLICATION
-
-Subject: {issue_category}
-
-To,
-The Relevant Authority
-
-Dear Sir/Madam,
-
-I am writing to request assistance regarding the following civic issue.
+IMPORTANT:
+- Do not invent names.
+- Do not invent account numbers.
+- Do not invent addresses.
+- Do not invent dates.
+- Do not invent laws.
+- Do not invent government departments.
+- Do not invent fees or deadlines.
+- Use placeholders where personal information is missing.
+- Do not provide legal advice.
+- Keep the complaint concise and practical.
 
 Issue:
+{issue_category}
+
+Explanation:
 {explanation}
 
-Important Information:
-{information}
+Important information:
+{json.dumps(important_information, ensure_ascii=False)}
 
-I kindly request that this matter be reviewed and that I be provided
-with the appropriate guidance or assistance.
+Use appropriate placeholders such as:
+[Your Name]
+[Your Address]
+[Account/Reference Number]
+[Date]
 
-Thank you for your consideration.
-
-Sincerely,
-
-Name: [Your Name]
-Address: [Your Address]
-Contact Number: [Your Phone Number]
-Account/Reference Number: [If applicable]
-Date: [Date]
+Return only the complaint/application text.
 """
+
+    try:
+        response = client.responses.create(
+            model=MODEL,
+            input=prompt
+        )
+
+        return response.output_text.strip()
+
+    except Exception as e:
+        print(f"Groq complaint generation unavailable: {e}")
+
+        if language == "Urdu":
+            return (
+                "Mohtaram Sir/Madam,\n\n"
+                "Main apne civic maslay ke silsilay mein darkhwast pesh karna chahta/chahti hoon.\n\n"
+                f"Masla: {issue_category}\n\n"
+                f"Tafseel: {explanation}\n\n"
+                "Barah-e-karam is matter ka jaiza le kar munasib action aur rehnumai faraham ki jaye.\n\n"
+                "Shukriya.\n"
+                "[Aap ka Naam]\n"
+                "[Date]"
+            )
+
+        return (
+            "To Whom It May Concern,\n\n"
+            "I would like to submit a complaint regarding the following civic issue.\n\n"
+            f"Issue: {issue_category}\n\n"
+            f"Details: {explanation}\n\n"
+            "Kindly review this matter and provide appropriate assistance and guidance.\n\n"
+            "Sincerely,\n"
+            "[Your Name]\n"
+            "[Your Address]\n"
+            "[Date]"
+        )
+
 # ============================================================
 # SESSION STATE
 # ============================================================
@@ -610,131 +516,48 @@ if "analysis" not in st.session_state:
 if "complaint" not in st.session_state:
     st.session_state.complaint = None
 
-
 # ============================================================
 # UI
 # ============================================================
 
+st.title("🏛️ AwaamiAgent")
+
 st.markdown(
     """
-    <div class="awaami-title">🏛️ AwaamiAgent</div>
-    <div class="awaami-subtitle">
-        AI-powered civic assistance to help citizens understand problems,
-        find practical next steps, and prepare complaints.
-    </div>
-    """,
-    unsafe_allow_html=True
+**Your AI civic assistant**
+
+Describe a civic problem in simple words.  
+AwaamiAgent will help you understand the issue and identify practical next steps.
+"""
 )
-with st.sidebar:
-
-    st.markdown("## 🏛️ AwaamiAgent")
-
-    st.markdown(
-        """
-        Your civic assistance companion.
-
-        Describe a civic problem or upload a supporting document,
-        and AwaamiAgent will help you understand the situation.
-        """
-    )
-
-    st.divider()
-
-    st.markdown("### How it works")
-
-    st.markdown(
-        """
-        **1. Describe**  
-        Tell us what happened.
-
-        **2. Analyze**  
-        AwaamiAgent examines the information.
-
-        **3. Understand**  
-        Get a simple explanation.
-
-        **4. Act**  
-        Review practical next steps and prepare a complaint.
-        """
-    )
-
-    st.divider()
-
-    st.markdown("### Supported documents")
-
-    st.markdown(
-        """
-        - PDF documents
-        - PNG images
-        - JPG/JPEG images
-        - Scanned civic documents
-        - Bills and notices
-        """
-    )
-
-    st.divider()
-
-    st.caption(
-        "AwaamiAgent provides general civic assistance. "
-        "Always verify jurisdiction-specific information through "
-        "reliable official sources."
-    )
 
 st.info(
-    "ℹ️ AwaamiAgent provides general civic assistance. "
-    "Laws, procedures, deadlines, fees, and responsible departments "
-    "should always be verified through reliable official sources."
+    "AwaamiAgent provides general civic assistance. "
+    "Jurisdiction-specific laws, procedures, deadlines, fees, and departments "
+    "should be verified through reliable official sources."
 )
-
 
 # ============================================================
 # INPUT
 # ============================================================
 
-st.markdown(
-    """
-    <div class="section-card">
-        <div class="section-title">📝 Describe Your Civic Problem</div>
-        <div class="section-description">
-            Explain your problem in simple words. You can mention what happened,
-            where the problem occurred, and any important details you know.
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
 problem = st.text_area(
-    "Your problem",
+    "Describe your civic problem",
     placeholder=(
         "Example: My electricity bill is much higher than usual "
         "and I do not understand why."
     ),
-    height=150,
-    label_visibility="collapsed"
-)
-
-st.markdown(
-    """
-    <div class="section-card">
-        <div class="section-title">📎 Supporting Document</div>
-        <div class="section-description">
-            Have a bill, notice, scanned document, or other relevant file?
-            Upload it here for additional context.
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True
+    height=160
 )
 
 uploaded_file = st.file_uploader(
-    "Choose a supporting document",
+    "Upload a civic/government document (optional)",
     type=["pdf", "png", "jpg", "jpeg"],
     help="Upload a PDF, scanned document, bill, notice, or image."
 )
 
 language = st.selectbox(
-    "🌐 Response language",
+    "Response language",
     ["English", "Urdu"]
 )
 
@@ -742,16 +565,13 @@ language = st.selectbox(
 # ANALYZE BUTTON
 # ============================================================
 
-if st.button(
-    "🔎 Analyze My Problem",
-    type="primary",
-    use_container_width=True
-):
+if st.button("🔎 Analyze Problem", type="primary"):
 
     if not problem.strip() and uploaded_file is None:
         st.warning(
             "Please describe your civic problem or upload a document."
         )
+
     else:
         st.session_state.analysis = None
         st.session_state.complaint = None
@@ -778,9 +598,7 @@ if st.button(
                 st.error(
                     "Something went wrong while analyzing the problem."
                 )
-
                 st.caption(f"Technical error: {str(e)}")
-
 
 # ============================================================
 # DISPLAY RESULTS
@@ -792,44 +610,19 @@ if st.session_state.analysis:
 
     st.divider()
 
-    st.markdown("## 📊 Your Civic Assessment")
+    if result.get("_ai_unavailable"):
+        st.warning(
+            "AI analysis service is temporarily unavailable. "
+            "AwaamiAgent is showing the available civic guidance and retrieved sources instead."
+        )
 
-    # --------------------------------------------------------
-    # ISSUE IDENTIFIED
-    # --------------------------------------------------------
+    st.subheader("📌 Issue Identified")
+    st.write(result.get("issue_category", "Not specified"))
 
-    st.markdown(
-        f"""
-        <div class="result-card">
-            <div class="result-label">Issue Identified</div>
-            <div class="result-value">
-                {result.get("issue_category", "Not specified")}
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.subheader("💡 What's happening?")
+    st.write(result.get("explanation", "No explanation available."))
 
-    # --------------------------------------------------------
-    # EXPLANATION
-    # --------------------------------------------------------
-
-    st.markdown("### 💡 What's happening?")
-
-    st.markdown(
-        f"""
-        <div class="result-card">
-            {result.get("explanation", "No explanation available.")}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    # --------------------------------------------------------
-    # IMPORTANT INFORMATION
-    # --------------------------------------------------------
-
-    st.markdown("### 🔎 Important Information")
+    st.subheader("🔎 Important Information")
 
     important_information = result.get(
         "important_information",
@@ -837,103 +630,12 @@ if st.session_state.analysis:
     )
 
     if important_information:
-
         for item in important_information:
-
-            st.markdown(
-                f"""
-                <div class="result-card">
-                    • {item}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
+            st.write(f"• {item}")
     else:
         st.write("No additional information provided.")
-    # --------------------------------------------------------
-    # OFFICIAL SOURCES
-    # --------------------------------------------------------
 
-    rag_sources = result.get(
-        "_rag_sources",
-        []
-    )
-
-    st.markdown("### 🔗 Official Sources Used")
-
-    if rag_sources:
-
-        for source in rag_sources:
-
-            if isinstance(source, dict):
-
-                source_name = source.get(
-                    "source_name",
-                    "Official Source"
-                )
-
-                authority = source.get(
-                    "authority",
-                    ""
-                )
-
-                category = source.get(
-                    "category",
-                    ""
-                )
-
-                source_url = source.get(
-                    "source_url",
-                    ""
-                )
-
-                last_verified = source.get(
-                    "last_verified",
-                    ""
-                )
-
-                st.markdown(
-                    f"""
-                    <div class="result-card">
-                        <strong>{source_name}</strong>
-                        <br>
-                        {authority}
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-                if category:
-                    st.caption(
-                        f"Category: {category}"
-                    )
-
-                if last_verified:
-                    st.caption(
-                        f"Last verified: {last_verified}"
-                    )
-
-                if source_url:
-                    st.markdown(
-                        f"[🔗 Open official source]({source_url})"
-                    )
-
-            else:
-                st.write(f"• {source}")
-
-    else:
-
-        st.info(
-            "No official source information was available "
-            "for this assessment."
-        )
-
-    # --------------------------------------------------------
-    # NEXT STEPS
-    # --------------------------------------------------------
-
-    st.markdown("### 🧭 What You Can Do Next")
+    st.subheader("🧭 What should I do?")
 
     next_steps = result.get(
         "next_steps",
@@ -941,27 +643,12 @@ if st.session_state.analysis:
     )
 
     if next_steps:
-
         for index, step in enumerate(next_steps, 1):
-
-            st.markdown(
-                f"""
-                <div class="result-card">
-                    <strong>Step {index}</strong><br>
-                    {step}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
+            st.write(f"**{index}.** {step}")
     else:
         st.write("No next steps provided.")
 
-    # --------------------------------------------------------
-    # REQUIRED DOCUMENTS
-    # --------------------------------------------------------
-
-    st.markdown("### 📄 Documents / Information You May Need")
+    st.subheader("📄 Documents / Information You May Need")
 
     required_documents = result.get(
         "required_documents",
@@ -969,26 +656,38 @@ if st.session_state.analysis:
     )
 
     if required_documents:
-
         for item in required_documents:
-
-            st.markdown(
-                f"""
-                <div class="result-card">
-                    • {item}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
+            st.write(f"• {item}")
     else:
         st.write("No specific documents identified.")
 
     # --------------------------------------------------------
-    # INITIAL COMPLAINT
+    # RAG SOURCES
     # --------------------------------------------------------
 
-    st.markdown("### 📝 Initial Complaint / Application")
+    rag_sources = result.get("_rag_sources", [])
+
+    if rag_sources:
+        st.subheader("🔗 Official Civic Sources")
+
+        for source in rag_sources:
+            if isinstance(source, dict):
+                source_name = (
+                    source.get("title")
+                    or source.get("source")
+                    or source.get("name")
+                    or "Official source"
+                )
+                source_url = source.get("url")
+
+                if source_url:
+                    st.markdown(f"- [{source_name}]({source_url})")
+                else:
+                    st.write(f"• {source_name}")
+            else:
+                st.write(f"• {source}")
+
+    st.subheader("📝 Initial Complaint / Application")
 
     st.text_area(
         "AI-generated draft",
@@ -999,27 +698,12 @@ if st.session_state.analysis:
 
     st.divider()
 
-    # --------------------------------------------------------
-    # POLISHED COMPLAINT
-    # --------------------------------------------------------
+    st.subheader("✍️ Generate a Polished Complaint")
 
-    st.markdown("## ✍️ Prepare Your Complaint")
-
-    st.caption(
-        "Turn the analyzed information into a more polished "
-        "complaint or application."
-    )
-
-    if st.button(
-        "📝 Generate Polished Complaint",
-        type="primary",
-        use_container_width=True
-    ):
+    if st.button("Generate Complaint"):
 
         with st.spinner("Generating complaint..."):
-
             try:
-
                 complaint = generate_complaint(
                     result.get("issue_category", ""),
                     result.get("explanation", ""),
@@ -1028,17 +712,13 @@ if st.session_state.analysis:
                 )
 
                 st.session_state.complaint = complaint
+                st.rerun()
 
             except Exception as e:
-
                 st.error(
                     "Something went wrong while generating the complaint."
                 )
-
-                st.caption(
-                    f"Technical error: {str(e)}"
-                )
-
+                st.caption(f"Technical error: {str(e)}")
 
 # ============================================================
 # DISPLAY POLISHED COMPLAINT
@@ -1046,22 +726,20 @@ if st.session_state.analysis:
 
 if st.session_state.complaint:
 
-    st.markdown("## 📄 Polished Complaint / Application")
+    st.subheader("📄 Polished Complaint / Application")
 
     st.text_area(
-        "Your complaint/application",
+        "Your draft",
         value=st.session_state.complaint,
         height=400
     )
 
     st.download_button(
-        label="⬇️ Download Complaint",
+        label="⬇️ Download Complaint as TXT",
         data=st.session_state.complaint,
         file_name="awaamiagent_complaint.txt",
-        mime="text/plain",
-        use_container_width=True
+        mime="text/plain"
     )
-
 
 # ============================================================
 # FOOTER
@@ -1069,14 +747,7 @@ if st.session_state.complaint:
 
 st.divider()
 
-st.markdown(
-    """
-    <div class="footer">
-        <strong>AwaamiAgent</strong> — Helping citizens understand,
-        verify, and act on civic issues.<br>
-        This tool provides general civic assistance and is not a government
-        authority or a substitute for professional legal advice.
-    </div>
-    """,
-    unsafe_allow_html=True
+st.caption(
+    "AwaamiAgent is an AI civic assistance tool and is not a government "
+    "authority or a substitute for professional legal advice."
 )
