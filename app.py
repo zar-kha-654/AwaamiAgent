@@ -897,6 +897,83 @@ if st.session_state.analysis:
 
     else:
         st.write("No additional information provided.")
+        # --------------------------------------------------------
+    # OFFICIAL SOURCES
+    # --------------------------------------------------------
+
+    rag_sources = result.get(
+        "_rag_sources",
+        []
+    )
+
+    st.markdown("### 🔗 Official Sources Used")
+
+    if rag_sources:
+
+        for source in rag_sources:
+
+            if isinstance(source, dict):
+
+                source_name = source.get(
+                    "source_name",
+                    "Official Source"
+                )
+
+                authority = source.get(
+                    "authority",
+                    ""
+                )
+
+                category = source.get(
+                    "category",
+                    ""
+                )
+
+                source_url = source.get(
+                    "source_url",
+                    ""
+                )
+
+                last_verified = source.get(
+                    "last_verified",
+                    ""
+                )
+
+                st.markdown(
+                    f"""
+                    <div class="result-card">
+                        <strong>{source_name}</strong>
+                        <br>
+                        {authority}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+                if category:
+                    st.caption(
+                        f"Category: {category}"
+                    )
+
+                if last_verified:
+                    st.caption(
+                        f"Last verified: {last_verified}"
+                    )
+
+                if source_url:
+                    st.markdown(
+                        f"[🔗 Open official source]({source_url})"
+                    )
+
+            else:
+                st.write(f"• {source}")
+
+    else:
+
+        st.info(
+            "No official source information was available "
+            "for this assessment."
+        )
 
     # --------------------------------------------------------
     # NEXT STEPS
