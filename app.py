@@ -21,10 +21,123 @@ MODEL = "openai/gpt-oss-120b"
 # ============================================================
 
 st.set_page_config(
-    page_title="AwaamiAgent",
+    page_title="AwaamiAgent | Civic Assistance",
     page_icon="🏛️",
-    layout="centered"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
+# ============================================================
+# CUSTOM UI STYLING
+# ============================================================
+
+st.markdown("""
+<style>
+
+    /* Main application */
+    .main {
+        background-color: #f8fafc;
+    }
+
+    /* Main content width */
+    .block-container {
+        max-width: 1100px;
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+    }
+
+    /* Main title */
+    .awaami-title {
+        font-size: 2.7rem;
+        font-weight: 800;
+        margin-bottom: 0.2rem;
+        letter-spacing: -1px;
+    }
+
+    .awaami-subtitle {
+        font-size: 1.05rem;
+        color: #64748b;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Section cards */
+    .section-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 1.4rem;
+        margin: 1rem 0;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .section-description {
+        color: #64748b;
+        font-size: 0.95rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Result cards */
+    .result-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 1.3rem;
+        margin: 0.8rem 0;
+    }
+
+    .result-label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.4rem;
+    }
+
+    .result-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    /* Small feature badges */
+    .feature-badge {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        margin: 0.2rem;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #3730a3;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    /* Footer */
+    .footer {
+        text-align: center;
+        color: #64748b;
+        font-size: 0.82rem;
+        padding: 1.5rem 0 0.5rem 0;
+    }
+
+    /* Improve buttons */
+    .stButton > button {
+        border-radius: 9px;
+        font-weight: 600;
+        min-height: 2.7rem;
+    }
+
+    /* Upload area */
+    [data-testid="stFileUploader"] {
+        border-radius: 12px;
+    }
+
+</style>
+""", unsafe_allow_html=True)
 
 
 # ============================================================
