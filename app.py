@@ -176,10 +176,21 @@ if not api_key:
 
 client = Groq(api_key=api_key)
 try:
-    client.models.list()
-    print("GROQ CONNECTION: OK")
+    import requests
+
+    test = requests.get(
+        "https://api.groq.com/openai/v1/models",
+        headers={
+            "Authorization": f"Bearer {api_key}"
+        },
+        timeout=20
+    )
+
+    print("GROQ HTTP STATUS:", test.status_code)
+    print("GROQ HTTP RESPONSE:", test.text[:500])
+
 except Exception as e:
-    print(f"GROQ CONNECTION ERROR: {e}")
+    print("GROQ NETWORK ERROR:", repr(e))
 # ============================================================
 # RAG KNOWLEDGE BASE
 # ============================================================
