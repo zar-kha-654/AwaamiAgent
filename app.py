@@ -447,33 +447,34 @@ Uploaded document text:
 {document_text}
 """
 
-    # --------------------------------------------------------
+        # --------------------------------------------------------
     # GROQ ANALYSIS
     # --------------------------------------------------------
 
     try:
 
-    response = client.responses.create(
-        model=MODEL,
-        input=prompt
-    )
+        response = client.responses.create(
+            model=MODEL,
+            input=prompt
+        )
 
-    raw_output = response.output_text.strip()
+        raw_output = response.output_text.strip()
 
-    result = parse_json_response(
-        raw_output
-    )
+        result = parse_json_response(
+            raw_output
+        )
 
-    result["_rag_sources"] = rag_sources
+        result["_rag_sources"] = rag_sources
 
-    return result
+        return result
 
-except Exception as e:
+    except Exception as e:
 
-    st.error("GROQ ERROR")
-    st.exception(e)
+        st.error("GROQ ERROR")
+        st.exception(e)
 
-    raise
+        raise
+        
 def parse_json_response(text):
     """
     Parse JSON even if the model accidentally surrounds it
