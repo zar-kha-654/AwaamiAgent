@@ -574,68 +574,72 @@ def generate_complaint(
     language
 ):
     """
-    Generate a more polished complaint/application
-    without inventing personal facts or legal information.
+    Generate a polished complaint/application locally.
+    This does not require the Groq API.
     """
 
-    language_instruction = (
-        "Write in English."
-        if language == "English"
-        else "Write in natural, simple Urdu."
+    information = "\n".join(
+        f"- {item}"
+        for item in important_information
     )
 
-    prompt = f"""
-You are AwaamiAgent's complaint drafting assistant.
+    if language == "Urdu":
 
-{language_instruction}
+        return f"""درخواست / شکایت
 
-Create a professional complaint/application based ONLY on the
-information provided below.
+موضوع: {issue_category}
 
-IMPORTANT:
-- Do not invent names.
-- Do not invent account numbers.
-- Do not invent addresses.
-- Do not invent dates.
-- Do not invent laws.
-- Do not invent government departments.
-- Do not invent fees or deadlines.
-- Use placeholders where personal information is missing.
-- Do not provide legal advice.
-- Keep the complaint concise and practical.
+محترم متعلقہ افسر،
 
-Issue:
-{issue_category}
+میں اس مسئلے کے حوالے سے درخواست/شکایت پیش کرنا چاہتا/چاہتی ہوں۔
 
-Explanation:
+مسئلے کی تفصیل:
 {explanation}
 
-Important information:
-{json.dumps(important_information, ensure_ascii=False)}
+اہم معلومات:
+{information}
 
-Use appropriate placeholders such as:
-[Your Name]
-[Your Address]
-[Account/Reference Number]
-[Date]
+براہِ کرم اس معاملے کا جائزہ لے کر ضروری کارروائی اور رہنمائی فراہم کی جائے۔
 
-Return only the complaint/application text.
+شکریہ۔
+
+نام: [آپ کا نام]
+پتہ: [آپ کا پتہ]
+رابطہ نمبر: [آپ کا فون نمبر]
+اکاؤنٹ/ریفرنس نمبر: [اگر قابل اطلاق ہو]
+تاریخ: [تاریخ]
 """
 
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
-        temperature=0.2
-    )
+    return f"""COMPLAINT / APPLICATION
 
-    return response.choices[0].message.content.strip()
+Subject: {issue_category}
 
+To,
+The Relevant Authority
 
+Dear Sir/Madam,
+
+I am writing to request assistance regarding the following civic issue.
+
+Issue:
+{explanation}
+
+Important Information:
+{information}
+
+I kindly request that this matter be reviewed and that I be provided
+with the appropriate guidance or assistance.
+
+Thank you for your consideration.
+
+Sincerely,
+
+Name: [Your Name]
+Address: [Your Address]
+Contact Number: [Your Phone Number]
+Account/Reference Number: [If applicable]
+Date: [Date]
+"""
 # ============================================================
 # SESSION STATE
 # ============================================================
